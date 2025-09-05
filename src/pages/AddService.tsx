@@ -1,112 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const AddService = () => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    customer_name: '',
-    service_type: '',
-    amount: '',
-    service_date: new Date().toISOString().split('T')[0],
-    payment_status: 'not_paid',
-    payment_method: 'cash',
-    deposit_amount: '',
-    due_date: '',
-    description: ''
+    customer_name: "",
+    service_type: "",
+    amount: "",
+    service_date: new Date().toISOString().split("T")[0],
+    payment_status: "not_paid",
+    payment_method: "cash",
+    deposit_amount: "",
+    due_date: "",
+    description: "",
   });
 
   const serviceTypes = [
-    'Wash & Fold',
-    'Dry Cleaning',
-    'Ironing',
-    'Wash & Iron',
-    'Comforter Cleaning',
-    'Curtain Cleaning',
-    'Alterations',
-    'Other'
+    "Wash Dry & Fold",
+    "Duvet Cleaning",
+    "Shoe Cleaning",
+    "Dry Cleaning",
+    "Ironing",
+    "Wash & Iron",
+    "Comforter Cleaning",
+    "Curtain Cleaning",
+    "Alterations",
+    "Other",
   ];
 
   useEffect(() => {
     if (!user && !loading) {
-      navigate('/auth');
+      navigate("/auth");
     }
   }, [user, loading, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.customer_name || !formData.service_type || !formData.amount) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('services')
-        .insert({
-          customer_name: formData.customer_name,
-          service_type: formData.service_type,
-          amount: parseFloat(formData.amount),
-          service_date: formData.service_date,
-          payment_status: formData.payment_status as 'not_paid' | 'partially_paid' | 'fully_paid',
-          payment_method: formData.payment_method as 'cash' | 'mpesa' | 'bank_cheque' | 'credit',
-          deposit_amount: formData.deposit_amount ? parseFloat(formData.deposit_amount) : 0,
-          due_date: formData.due_date || null,
-          description: formData.description || null,
-          business_id: userProfile.business_id,
-          created_by: user.id
-        });
+      const { error } = await supabase.from("services").insert({
+        customer_name: formData.customer_name,
+        service_type: formData.service_type,
+        amount: parseFloat(formData.amount),
+        service_date: formData.service_date,
+        payment_status: formData.payment_status as
+          | "not_paid"
+          | "partially_paid"
+          | "fully_paid",
+        payment_method: formData.payment_method as
+          | "cash"
+          | "mpesa"
+          | "bank_cheque"
+          | "credit",
+        deposit_amount: formData.deposit_amount
+          ? parseFloat(formData.deposit_amount)
+          : 0,
+        due_date: formData.due_date || null,
+        description: formData.description || null,
+        business_id: userProfile.business_id,
+        created_by: user.id,
+      });
 
       if (error) throw error;
 
       // If payment method is credit, create a credit record
-      if (formData.payment_method === 'credit' && formData.due_date) {
-        const { error: creditError } = await supabase
-          .from('credits')
-          .insert({
-            customer_name: formData.customer_name,
-            service_id: '', // We'll need to get the inserted service ID
-            amount: parseFloat(formData.amount),
-            due_date: formData.due_date,
-            business_id: userProfile.business_id
-          });
-        
-        if (creditError) console.error('Error creating credit record:', creditError);
+      if (formData.payment_method === "credit" && formData.due_date) {
+        const { error: creditError } = await supabase.from("credits").insert({
+          customer_name: formData.customer_name,
+          service_id: "", // We'll need to get the inserted service ID
+          amount: parseFloat(formData.amount),
+          due_date: formData.due_date,
+          business_id: userProfile.business_id,
+        });
+
+        if (creditError)
+          console.error("Error creating credit record:", creditError);
       }
 
-      toast.success('Service added successfully!');
-      navigate('/services');
+      toast.success("Service added successfully!");
+      navigate("/services");
     } catch (error) {
-      console.error('Error adding service:', error);
-      toast.error('Failed to add service');
+      console.error("Error adding service:", error);
+      toast.error("Failed to add service");
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading || !user) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -116,14 +134,22 @@ const AddService = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center py-4 sm:py-6 gap-4">
             <Link to="/services" className="w-full sm:w-auto">
-              <Button variant="outline" size="sm" className="w-full sm:w-auto h-10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto h-10"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Services
               </Button>
             </Link>
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Add New Service</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">Create a new service record</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                Add New Service
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Create a new service record
+              </p>
             </div>
           </div>
         </div>
@@ -144,7 +170,9 @@ const AddService = () => {
                   <Input
                     id="customer_name"
                     value={formData.customer_name}
-                    onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("customer_name", e.target.value)
+                    }
                     placeholder="Enter customer name"
                     className="h-10"
                     required
@@ -154,9 +182,11 @@ const AddService = () => {
                 {/* Service Type */}
                 <div className="space-y-2">
                   <Label htmlFor="service_type">Service Type *</Label>
-                  <Select 
-                    value={formData.service_type} 
-                    onValueChange={(value) => handleInputChange('service_type', value)}
+                  <Select
+                    value={formData.service_type}
+                    onValueChange={(value) =>
+                      handleInputChange("service_type", value)
+                    }
                   >
                     <SelectTrigger className="h-10">
                       <SelectValue placeholder="Select service type" />
@@ -180,7 +210,9 @@ const AddService = () => {
                     step="0.01"
                     min="0"
                     value={formData.amount}
-                    onChange={(e) => handleInputChange('amount', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("amount", e.target.value)
+                    }
                     placeholder="0.00"
                     className="h-10"
                     required
@@ -194,7 +226,9 @@ const AddService = () => {
                     id="service_date"
                     type="date"
                     value={formData.service_date}
-                    onChange={(e) => handleInputChange('service_date', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("service_date", e.target.value)
+                    }
                     className="h-10"
                   />
                 </div>
@@ -202,9 +236,11 @@ const AddService = () => {
                 {/* Payment Method */}
                 <div className="space-y-2">
                   <Label htmlFor="payment_method">Payment Method *</Label>
-                  <Select 
-                    value={formData.payment_method} 
-                    onValueChange={(value) => handleInputChange('payment_method', value)}
+                  <Select
+                    value={formData.payment_method}
+                    onValueChange={(value) =>
+                      handleInputChange("payment_method", value)
+                    }
                   >
                     <SelectTrigger className="h-10">
                       <SelectValue />
@@ -221,32 +257,40 @@ const AddService = () => {
                 {/* Payment Status */}
                 <div className="space-y-2">
                   <Label htmlFor="payment_status">Payment Status</Label>
-                  <Select 
-                    value={formData.payment_status} 
-                    onValueChange={(value) => handleInputChange('payment_status', value)}
+                  <Select
+                    value={formData.payment_status}
+                    onValueChange={(value) =>
+                      handleInputChange("payment_status", value)
+                    }
                   >
                     <SelectTrigger className="h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="not_paid">Not Paid</SelectItem>
-                      <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                      <SelectItem value="partially_paid">
+                        Partially Paid
+                      </SelectItem>
                       <SelectItem value="fully_paid">Fully Paid</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Conditional Fields */}
-                {formData.payment_status === 'partially_paid' && (
+                {formData.payment_status === "partially_paid" && (
                   <div className="space-y-2">
-                    <Label htmlFor="deposit_amount">Deposit Amount (KES) *</Label>
+                    <Label htmlFor="deposit_amount">
+                      Deposit Amount (KES) *
+                    </Label>
                     <Input
                       id="deposit_amount"
                       type="number"
                       step="0.01"
                       min="0"
                       value={formData.deposit_amount}
-                      onChange={(e) => handleInputChange('deposit_amount', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("deposit_amount", e.target.value)
+                      }
                       placeholder="0.00"
                       className="h-10"
                       required
@@ -254,14 +298,16 @@ const AddService = () => {
                   </div>
                 )}
 
-                {formData.payment_method === 'credit' && (
+                {formData.payment_method === "credit" && (
                   <div className="space-y-2">
                     <Label htmlFor="due_date">Due Date *</Label>
                     <Input
                       id="due_date"
                       type="date"
                       value={formData.due_date}
-                      onChange={(e) => handleInputChange('due_date', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("due_date", e.target.value)
+                      }
                       className="h-10"
                       required
                     />
@@ -275,7 +321,9 @@ const AddService = () => {
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
                   placeholder="Additional notes about the service..."
                   rows={3}
                 />
@@ -284,12 +332,20 @@ const AddService = () => {
               {/* Submit Buttons */}
               <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4">
                 <Link to="/services" className="order-2 sm:order-1">
-                  <Button type="button" variant="outline" className="w-full sm:w-auto h-10">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto h-10"
+                  >
                     Cancel
                   </Button>
                 </Link>
-                <Button type="submit" disabled={submitting} className="order-1 sm:order-2 w-full sm:w-auto h-10">
-                  {submitting ? 'Adding Service...' : 'Add Service'}
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="order-1 sm:order-2 w-full sm:w-auto h-10"
+                >
+                  {submitting ? "Adding Service..." : "Add Service"}
                 </Button>
               </div>
             </form>
