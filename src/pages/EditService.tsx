@@ -49,7 +49,7 @@ const EditService = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const serviceTypes = [
-    "Wash Dry & Fold",
+    "Wash, Dry & Fold",
     "Duvet Cleaning",
     "Shoe Cleaning",
     "Dry Cleaning",
@@ -58,6 +58,7 @@ const EditService = () => {
     "Comforter Cleaning",
     "Curtain Cleaning",
     "Alterations",
+    "Stain Removal",
     "Other",
   ];
 

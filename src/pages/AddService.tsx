@@ -34,7 +34,7 @@ const AddService = () => {
   });
 
   const serviceTypes = [
-    "Wash Dry & Fold",
+    "Wash, Dry & Fold",
     "Duvet Cleaning",
     "Shoe Cleaning",
     "Dry Cleaning",
@@ -43,6 +43,7 @@ const AddService = () => {
     "Comforter Cleaning",
     "Curtain Cleaning",
     "Alterations",
+    "Stain Removal",
     "Other",
   ];
 
