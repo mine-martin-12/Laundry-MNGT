@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Filter, Edit, Trash2, Receipt } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/currency';
-import { DateRangeFilter, DateRange } from '@/components/DateRangeFilter';
-import { ExpenseReports } from '@/components/ExpenseReports';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Search, Filter, Edit, Trash2, Receipt } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
+import { DateRangeFilter, DateRange } from "@/components/DateRangeFilter";
+import { ExpenseReports } from "@/components/ExpenseReports";
 
 interface Expense {
   id: string;
@@ -28,28 +34,29 @@ const Expenses = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [loadingExpenses, setLoadingExpenses] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(),
-    to: new Date()
+    to: new Date(),
   });
   const [showReports, setShowReports] = useState(false);
 
   const expenseCategories = [
-    'Supplies',
-    'Equipment',
-    'Utilities',
-    'Rent',
-    'Marketing',
-    'Insurance',
-    'Maintenance',
-    'Other'
+    "Supplies",
+    "Transportation",
+    "Equipment",
+    "Utilities",
+    "Rent",
+    "Marketing",
+    "Insurance",
+    "Maintenance",
+    "Other",
   ];
 
   useEffect(() => {
     if (!user && !loading) {
-      navigate('/auth');
+      navigate("/auth");
     }
   }, [user, loading, navigate]);
 
@@ -66,18 +73,18 @@ const Expenses = () => {
   const fetchExpenses = async () => {
     try {
       const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('business_id', userProfile.business_id)
-        .gte('expense_date', dateRange.from.toISOString().split('T')[0])
-        .lte('expense_date', dateRange.to.toISOString().split('T')[0])
-        .order('expense_date', { ascending: false });
+        .from("expenses")
+        .select("*")
+        .eq("business_id", userProfile.business_id)
+        .gte("expense_date", dateRange.from.toISOString().split("T")[0])
+        .lte("expense_date", dateRange.to.toISOString().split("T")[0])
+        .order("expense_date", { ascending: false });
 
       if (error) throw error;
       setExpenses(data || []);
     } catch (error) {
-      console.error('Error fetching expenses:', error);
-      toast.error('Failed to load expenses');
+      console.error("Error fetching expenses:", error);
+      toast.error("Failed to load expenses");
     } finally {
       setLoadingExpenses(false);
     }
@@ -87,44 +94,60 @@ const Expenses = () => {
     let filtered = expenses;
 
     if (searchTerm) {
-      filtered = filtered.filter(expense =>
-        expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        expense.category.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (expense) =>
+          expense.description
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          expense.category.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(expense => expense.category === categoryFilter);
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(
+        (expense) => expense.category === categoryFilter
+      );
     }
 
     setFilteredExpenses(filtered);
   };
 
   const deleteExpense = async (expenseId: string) => {
-    if (!confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this expense? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
     try {
       const { error } = await supabase
-        .from('expenses')
+        .from("expenses")
         .delete()
-        .eq('id', expenseId);
+        .eq("id", expenseId);
 
       if (error) throw error;
-      
+
       await fetchExpenses();
-      toast.success('Expense deleted successfully');
+      toast.success("Expense deleted successfully");
     } catch (error) {
-      console.error('Error deleting expense:', error);
-      toast.error('Failed to delete expense');
+      console.error("Error deleting expense:", error);
+      toast.error("Failed to delete expense");
     }
   };
 
-  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + parseFloat(String(expense.amount)), 0);
+  const totalExpenses = filteredExpenses.reduce(
+    (sum, expense) => sum + parseFloat(String(expense.amount)),
+    0
+  );
 
   if (loading || !user) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -133,17 +156,21 @@ const Expenses = () => {
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">Expenses Management</h1>
-            <p className="text-muted-foreground">Track and manage your business expenses</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Expenses Management
+            </h1>
+            <p className="text-muted-foreground">
+              Track and manage your business expenses
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <DateRangeFilter onDateRangeChange={setDateRange} />
             <div className="flex gap-2">
               <Button
-                variant={showReports ? 'default' : 'outline'}
+                variant={showReports ? "default" : "outline"}
                 onClick={() => setShowReports(!showReports)}
               >
-                {showReports ? 'Hide Reports' : 'Show Reports'}
+                {showReports ? "Hide Reports" : "Show Reports"}
               </Button>
               <Link to="/">
                 <Button variant="outline">Back to Dashboard</Button>
@@ -175,13 +202,19 @@ const Expenses = () => {
               <div>
                 <h3 className="text-lg font-semibold">Total Expenses</h3>
                 <p className="text-muted-foreground">
-                  {categoryFilter !== 'all' ? `${categoryFilter} expenses` : 'All categories'}
+                  {categoryFilter !== "all"
+                    ? `${categoryFilter} expenses`
+                    : "All categories"}
                   {searchTerm && ` matching "${searchTerm}"`}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{formatCurrency(totalExpenses)}</p>
-                <p className="text-sm text-muted-foreground">{filteredExpenses.length} items</p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totalExpenses)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {filteredExpenses.length} items
+                </p>
               </div>
             </div>
           </CardContent>
@@ -203,7 +236,10 @@ const Expenses = () => {
                 </div>
               </div>
               <div className="w-full sm:w-48">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <Select
+                  value={categoryFilter}
+                  onValueChange={setCategoryFilter}
+                >
                   <SelectTrigger>
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="Filter by category" />
@@ -233,19 +269,25 @@ const Expenses = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-2">
-                        <h3 className="text-lg font-semibold">{expense.description}</h3>
+                        <h3 className="text-lg font-semibold">
+                          {expense.description}
+                        </h3>
                         <Badge variant="outline">{expense.category}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Date: {new Date(expense.expense_date).toLocaleDateString()}
+                        Date:{" "}
+                        {new Date(expense.expense_date).toLocaleDateString()}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Added: {new Date(expense.created_at).toLocaleDateString()}
+                        Added:{" "}
+                        {new Date(expense.created_at).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-xl font-bold text-destructive">-{formatCurrency(parseFloat(String(expense.amount)))}</p>
+                        <p className="text-xl font-bold text-destructive">
+                          -{formatCurrency(parseFloat(String(expense.amount)))}
+                        </p>
                       </div>
                       <div className="flex gap-2">
                         <Link to={`/expenses/edit/${expense.id}`}>
@@ -253,7 +295,7 @@ const Expenses = () => {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
-                        {userProfile?.role === 'admin' && (
+                        {userProfile?.role === "admin" && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -275,10 +317,9 @@ const Expenses = () => {
               <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No expenses found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm || categoryFilter !== 'all' 
-                  ? 'Try adjusting your search or filter criteria' 
-                  : 'Get started by adding your first expense'
-                }
+                {searchTerm || categoryFilter !== "all"
+                  ? "Try adjusting your search or filter criteria"
+                  : "Get started by adding your first expense"}
               </p>
               <Link to="/expenses/new">
                 <Button>

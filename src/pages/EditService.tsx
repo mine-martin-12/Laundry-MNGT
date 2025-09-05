@@ -51,11 +51,11 @@ const EditService = () => {
   const serviceTypes = [
     "Wash, Dry & Fold",
     "Duvet Cleaning",
+    "Beddings Cleaning",
     "Shoe Cleaning",
     "Dry Cleaning",
     "Ironing",
     "Wash & Iron",
-    "Comforter Cleaning",
     "Curtain Cleaning",
     "Alterations",
     "Stain Removal",

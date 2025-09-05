@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthProvider';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/components/AuthProvider";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface ExpenseFormData {
   category: string;
@@ -22,30 +28,31 @@ const EditExpense = () => {
   const { user, userProfile, loading } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState<ExpenseFormData>({
-    category: '',
-    description: '',
-    amount: '',
-    expense_date: ''
+    category: "",
+    description: "",
+    amount: "",
+    expense_date: "",
   });
   const [loadingExpense, setLoadingExpense] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const expenseCategories = [
-    'Supplies',
-    'Equipment',
-    'Utilities',
-    'Rent',
-    'Marketing',
-    'Insurance',
-    'Maintenance',
-    'Other'
+    "Supplies",
+    "Transportation",
+    "Equipment",
+    "Utilities",
+    "Rent",
+    "Marketing",
+    "Insurance",
+    "Maintenance",
+    "Other",
   ];
 
   useEffect(() => {
     if (!user && !loading) {
-      navigate('/auth');
+      navigate("/auth");
     }
   }, [user, loading, navigate]);
 
@@ -58,10 +65,10 @@ const EditExpense = () => {
   const fetchExpense = async () => {
     try {
       const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('id', id)
-        .eq('business_id', userProfile.business_id)
+        .from("expenses")
+        .select("*")
+        .eq("id", id)
+        .eq("business_id", userProfile.business_id)
         .single();
 
       if (error) throw error;
@@ -71,27 +78,27 @@ const EditExpense = () => {
           category: data.category,
           description: data.description,
           amount: data.amount.toString(),
-          expense_date: data.expense_date
+          expense_date: data.expense_date,
         });
       }
     } catch (error) {
-      console.error('Error fetching expense:', error);
-      toast.error('Failed to load expense data');
-      navigate('/expenses');
+      console.error("Error fetching expense:", error);
+      toast.error("Failed to load expense data");
+      navigate("/expenses");
     } finally {
       setLoadingExpense(false);
     }
   };
 
   const handleInputChange = (field: keyof ExpenseFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.category || !formData.description || !formData.amount) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -99,23 +106,23 @@ const EditExpense = () => {
 
     try {
       const { error } = await supabase
-        .from('expenses')
+        .from("expenses")
         .update({
           category: formData.category,
           description: formData.description,
           amount: parseFloat(formData.amount),
           expense_date: formData.expense_date,
         })
-        .eq('id', id)
-        .eq('business_id', userProfile.business_id);
+        .eq("id", id)
+        .eq("business_id", userProfile.business_id);
 
       if (error) throw error;
 
-      toast.success('Expense updated successfully!');
-      navigate('/expenses');
+      toast.success("Expense updated successfully!");
+      navigate("/expenses");
     } catch (error) {
-      console.error('Error updating expense:', error);
-      toast.error('Failed to update expense');
+      console.error("Error updating expense:", error);
+      toast.error("Failed to update expense");
     } finally {
       setSubmitting(false);
     }
@@ -157,9 +164,11 @@ const EditExpense = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category">Category *</Label>
-                  <Select 
-                    value={formData.category} 
-                    onValueChange={(value) => handleInputChange('category', value)}
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) =>
+                      handleInputChange("category", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -182,7 +191,9 @@ const EditExpense = () => {
                     step="0.01"
                     min="0"
                     value={formData.amount}
-                    onChange={(e) => handleInputChange('amount', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("amount", e.target.value)
+                    }
                     placeholder="0.00"
                     required
                   />
@@ -194,7 +205,9 @@ const EditExpense = () => {
                     id="expense_date"
                     type="date"
                     value={formData.expense_date}
-                    onChange={(e) => handleInputChange('expense_date', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("expense_date", e.target.value)
+                    }
                     required
                   />
                 </div>
@@ -205,7 +218,9 @@ const EditExpense = () => {
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
                   placeholder="Describe the expense..."
                   rows={3}
                   required
@@ -213,13 +228,9 @@ const EditExpense = () => {
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1"
-                >
+                <Button type="submit" disabled={submitting} className="flex-1">
                   <Save className="h-4 w-4 mr-2" />
-                  {submitting ? 'Updating...' : 'Update Expense'}
+                  {submitting ? "Updating..." : "Update Expense"}
                 </Button>
                 <Link to="/expenses" className="flex-1">
                   <Button type="button" variant="outline" className="w-full">
