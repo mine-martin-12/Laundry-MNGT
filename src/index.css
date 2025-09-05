@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* WashWise Business Hub - Professional Design System
+Modern business management with clean aesthetics and professional color palette
+*/
+
+@layer base {
+  :root {
+    /* Professional Business Color Palette */
+    --background: 220 15% 97%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Professional Blue-Teal Palette */
+    --primary: 190 95% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 190 85% 45%;
+    --primary-glow: 190 75% 55%;
+
+    --secondary: 215 15% 92%;
+    --secondary-foreground: 215 25% 25%;
+
+    --muted: 215 20% 95%;
+    --muted-foreground: 215 15% 45%;
+
+    --accent: 195 80% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 95% 55%;
+    --warning-foreground: 215 25% 15%;
+
+    --border: 215 25% 88%;
+    --input: 215 25% 88%;
+    --ring: 190 95% 35%;
+
+    --radius: 0.75rem;
+
+    /* Professional Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(190 95% 35%), hsl(190 75% 55%));
+    --gradient-subtle: linear-gradient(135deg, hsl(215 15% 97%), hsl(215 20% 95%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(215 20% 98%));
+
+    /* Professional Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(215 25% 15% / 0.08);
+    --shadow-medium: 0 4px 16px -4px hsl(215 25% 15% / 0.12);
+    --shadow-strong: 0 8px 32px -8px hsl(215 25% 15% / 0.16);
+    --shadow-glow: 0 0 32px hsl(190 95% 35% / 0.15);
+
+    /* Typography Scale */
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* Professional Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Mode Professional Palette */
+    --background: 215 25% 8%;
+    --foreground: 215 15% 92%;
+
+    --card: 215 25% 10%;
+    --card-foreground: 215 15% 92%;
+
+    --popover: 215 25% 10%;
+    --popover-foreground: 215 15% 92%;
+
+    --primary: 190 95% 45%;
+    --primary-foreground: 215 25% 8%;
+    --primary-soft: 190 85% 55%;
+    --primary-glow: 190 75% 65%;
+
+    --secondary: 215 20% 15%;
+    --secondary-foreground: 215 15% 85%;
+
+    --muted: 215 25% 12%;
+    --muted-foreground: 215 15% 65%;
+
+    --accent: 195 80% 52%;
+    --accent-foreground: 215 25% 8%;
+
+    --destructive: 0 85% 65%;
+    --destructive-foreground: 215 15% 92%;
+
+    --success: 142 70% 55%;
+    --success-foreground: 215 25% 8%;
+
+    --warning: 45 95% 65%;
+    --warning-foreground: 215 25% 8%;
+
+    --border: 215 25% 18%;
+    --input: 215 25% 18%;
+    --ring: 190 95% 45%;
+
+    /* Dark Mode Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(190 95% 45%), hsl(190 75% 65%));
+    --gradient-subtle: linear-gradient(135deg, hsl(215 25% 8%), hsl(215 25% 12%));
+    --gradient-card: linear-gradient(135deg, hsl(215 25% 10%), hsl(215 20% 12%));
+
+    /* Dark Mode Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 16px -4px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 8px 32px -8px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 32px hsl(190 95% 45% / 0.25);
+
+    --sidebar-background: 215 25% 8%;
+    --sidebar-foreground: 215 15% 85%;
+    --sidebar-primary: 190 95% 45%;
+    --sidebar-primary-foreground: 215 25% 8%;
+    --sidebar-accent: 215 25% 12%;
+    --sidebar-accent-foreground: 215 15% 85%;
+    --sidebar-border: 215 25% 18%;
+    --sidebar-ring: 190 95% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
