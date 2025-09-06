@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import { DateRangeFilter, DateRange } from "@/components/DateRangeFilter";
 import { ExpenseReports } from "@/components/ExpenseReports";
+import { ExpensesByDate } from "@/components/ExpensesByDate";
 
 interface Expense {
   id: string;
@@ -51,6 +52,7 @@ const Expenses = () => {
     "Marketing",
     "Insurance",
     "Maintenance",
+    "Repairs",
     "Other",
   ];
 
@@ -262,55 +264,11 @@ const Expenses = () => {
         {loadingExpenses ? (
           <div className="text-center py-8">Loading expenses...</div>
         ) : filteredExpenses.length > 0 ? (
-          <div className="grid gap-4">
-            {filteredExpenses.map((expense) => (
-              <Card key={expense.id} className="shadow-medium">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-2">
-                        <h3 className="text-lg font-semibold">
-                          {expense.description}
-                        </h3>
-                        <Badge variant="outline">{expense.category}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Date:{" "}
-                        {new Date(expense.expense_date).toLocaleDateString()}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Added:{" "}
-                        {new Date(expense.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-destructive">
-                          -{formatCurrency(parseFloat(String(expense.amount)))}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Link to={`/expenses/edit/${expense.id}`}>
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        {userProfile?.role === "admin" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteExpense(expense.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ExpensesByDate
+            expenses={filteredExpenses}
+            onDelete={deleteExpense}
+            userRole={userProfile?.role}
+          />
         ) : (
           <Card>
             <CardContent className="text-center py-12">

@@ -37,6 +37,7 @@ const AddExpense = () => {
     "Marketing",
     "Insurance",
     "Maintenance",
+    "Repairs",
     "Other",
   ];
 
