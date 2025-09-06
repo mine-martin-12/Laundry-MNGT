@@ -26,6 +26,7 @@ import {
   useSidebar
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/components/AuthProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -171,29 +172,34 @@ export function AppSidebar() {
             </div>
           )}
           
-          <div className="flex flex-col gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <NavLink to="/settings">
-                <Settings className="h-4 w-4" />
-                {open && <span className="ml-2">Settings</span>}
-              </NavLink>
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              {open && <span className="ml-2">Sign Out</span>}
-            </Button>
-          </div>
+            <div className="flex flex-col gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <NavLink to="/settings">
+                  <Settings className="h-4 w-4" />
+                  {open && <span className="ml-2">Settings</span>}
+                </NavLink>
+              </Button>
+              
+              <div className="flex items-center">
+                <ThemeToggle />
+                {open && <span className="ml-2 text-sm text-sidebar-foreground">Theme</span>}
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                {open && <span className="ml-2">Sign Out</span>}
+              </Button>
+            </div>
         </div>
       </SidebarFooter>
     </Sidebar>

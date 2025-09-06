@@ -68,8 +68,24 @@ export function DateRangeFilter({ onDateRangeChange, defaultRange = 'today' }: D
     setSelectedRange(value);
     
     if (value !== 'custom') {
-      const range = getCurrentDateRange();
-      onDateRangeChange(range);
+      // Calculate range with the new value directly
+      const now = new Date();
+      const range = predefinedRanges[value as keyof typeof predefinedRanges];
+      
+      let dateRange: DateRange;
+      if (range.days === 0) {
+        dateRange = {
+          from: startOfDay(now),
+          to: endOfDay(now)
+        };
+      } else {
+        dateRange = {
+          from: startOfDay(subDays(now, range.days - 1)),
+          to: endOfDay(now)
+        };
+      }
+      
+      onDateRangeChange(dateRange);
     }
   };
 

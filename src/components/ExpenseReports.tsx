@@ -42,6 +42,9 @@ export function ExpenseReports({ expenses }: ExpenseReportsProps) {
     });
   };
 
+  // Calculate total expenses first
+  const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(String(expense.amount)), 0);
+
   const getCategoryBreakdown = () => {
     const breakdown: { [category: string]: { total: number; count: number } } = {};
     
@@ -66,8 +69,6 @@ export function ExpenseReports({ expenses }: ExpenseReportsProps) {
   const currentMonthExpenses = getCurrentMonthExpenses();
   const previousMonthExpenses = getPreviousMonthExpenses();
   const categoryBreakdown = getCategoryBreakdown();
-
-  const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(String(expense.amount)), 0);
   const currentMonthTotal = currentMonthExpenses.reduce((sum, expense) => sum + parseFloat(String(expense.amount)), 0);
   const previousMonthTotal = previousMonthExpenses.reduce((sum, expense) => sum + parseFloat(String(expense.amount)), 0);
 

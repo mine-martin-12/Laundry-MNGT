@@ -18,13 +18,15 @@ import {
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { DateRangeFilter, DateRange } from '@/components/DateRangeFilter';
+import { startOfDay, endOfDay } from 'date-fns';
 
 interface DashboardStats {
   totalServices: number;
+  periodServices: number;
   pendingPayments: number;
   pendingRevenue: number;
+  periodRevenue: number;
   totalRevenue: number;
-  monthlyRevenue: number;
   totalExpenses: number;
   recentServices: any[];
   unpaidServices: any[];
@@ -35,18 +37,19 @@ const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalServices: 0,
+    periodServices: 0,
     pendingPayments: 0,
     pendingRevenue: 0,
+    periodRevenue: 0,
     totalRevenue: 0,
-    monthlyRevenue: 0,
     totalExpenses: 0,
     recentServices: [],
     unpaidServices: [],
     partialServices: []
   });
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(),
-    to: new Date()
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date())
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -60,8 +63,15 @@ const Dashboard = () => {
     try {
       const businessId = userProfile.business_id;
 
-      // Fetch services data filtered by date range
-      const { data: services } = await supabase
+      // Fetch ALL services for all-time calculations
+      const { data: allServices } = await supabase
+        .from('services')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false });
+
+      // Fetch services data filtered by date range for period calculations
+      const { data: periodServices } = await supabase
         .from('services')
         .select('*')
         .eq('business_id', businessId)
@@ -77,44 +87,51 @@ const Dashboard = () => {
         .gte('expense_date', dateRange.from.toISOString().split('T')[0])
         .lte('expense_date', dateRange.to.toISOString().split('T')[0]);
 
-      // Fetch credits data
+      // Fetch credits data (all-time for pending calculations)
       const { data: credits } = await supabase
         .from('credits')
         .select('*')
         .eq('business_id', businessId);
 
-      if (services && expenses) {
-        // Enhanced revenue calculations
-        const fullyPaidServices = services.filter(s => s.payment_status === 'fully_paid');
-        const partiallyPaidServices = services.filter(s => s.payment_status === 'partially_paid');
-        const unpaidServices = services.filter(s => s.payment_status === 'not_paid');
+      if (allServices && periodServices && expenses) {
+        // ALL-TIME calculations
+        const allFullyPaidServices = allServices.filter(s => s.payment_status === 'fully_paid');
+        const allPartiallyPaidServices = allServices.filter(s => s.payment_status === 'partially_paid');
+        const allUnpaidServices = allServices.filter(s => s.payment_status === 'not_paid');
 
-        // Total revenue includes fully paid services + partial payments (deposits)
-        const totalRevenue = fullyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0) +
-          partiallyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.deposit_amount || 0)), 0);
+        // Total revenue (all-time) - actual money received
+        const totalRevenue = allFullyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0) +
+          allPartiallyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.deposit_amount || 0)), 0);
 
-        // Monthly revenue is the same as total revenue when filtered by date range
-        const monthlyRevenue = totalRevenue;
-
-        // Pending revenue includes unpaid amounts + remaining balances + credits
-        const unpaidAmounts = unpaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0);
-        const remainingBalances = partiallyPaidServices.reduce((sum, s) => 
+        // Pending revenue (all-time) - money still owed
+        const allUnpaidAmounts = allUnpaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0);
+        const allRemainingBalances = allPartiallyPaidServices.reduce((sum, s) => 
           sum + (parseFloat(String(s.amount)) - parseFloat(String(s.deposit_amount || 0))), 0);
         const creditAmounts = credits ? credits.reduce((sum, c) => sum + parseFloat(String(c.amount)), 0) : 0;
-        const pendingRevenue = unpaidAmounts + remainingBalances + creditAmounts;
+        const pendingRevenue = allUnpaidAmounts + allRemainingBalances + creditAmounts;
+
+        // PERIOD calculations
+        const periodFullyPaidServices = periodServices.filter(s => s.payment_status === 'fully_paid');
+        const periodPartiallyPaidServices = periodServices.filter(s => s.payment_status === 'partially_paid');
+        const periodUnpaidServices = periodServices.filter(s => s.payment_status === 'not_paid');
+
+        // Period revenue - money received in selected period
+        const periodRevenue = periodFullyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0) +
+          periodPartiallyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.deposit_amount || 0)), 0);
 
         const totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(String(e.amount)), 0);
 
         setStats({
-          totalServices: services.length,
-          pendingPayments: unpaidServices.length + partiallyPaidServices.length,
+          totalServices: allServices.length,
+          periodServices: periodServices.length,
+          pendingPayments: allUnpaidServices.length + allPartiallyPaidServices.length,
           pendingRevenue,
+          periodRevenue,
           totalRevenue,
-          monthlyRevenue,
           totalExpenses,
-          recentServices: services.slice(0, 5),
-          unpaidServices: unpaidServices.slice(0, 3),
-          partialServices: partiallyPaidServices.slice(0, 2)
+          recentServices: periodServices.slice(0, 5),
+          unpaidServices: allUnpaidServices.slice(0, 3),
+          partialServices: allPartiallyPaidServices.slice(0, 2)
         });
       }
     } catch (error) {
@@ -182,13 +199,13 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Services</CardTitle>
+            <CardTitle className="text-sm font-medium">Period Services</CardTitle>
             <ShirtIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{stats.totalServices}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.periodServices}</div>
             <p className="text-xs text-muted-foreground">
-              All time services completed
+              Services in selected period
             </p>
           </CardContent>
         </Card>
@@ -215,7 +232,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold text-success">
-              {formatCurrency(stats.monthlyRevenue)}
+              {formatCurrency(stats.periodRevenue)}
             </div>
             <p className="text-xs text-muted-foreground">
               Revenue in selected period
@@ -226,12 +243,12 @@ const Dashboard = () => {
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
-              All time revenue
+              All-time revenue collected
             </p>
           </CardContent>
         </Card>

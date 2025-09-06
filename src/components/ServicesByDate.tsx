@@ -60,7 +60,9 @@ export function ServicesByDate({ services, onMarkPaid, onDelete, userRole }: Ser
 
   const getDateSummary = (services: Service[]) => {
     const totalServices = services.length;
-    const totalAmount = services.reduce((sum, service) => {
+    
+    // Amount collected (deposits + full payments)
+    const totalAmountCollected = services.reduce((sum, service) => {
       if (service.payment_status === 'fully_paid') {
         return sum + service.amount;
       } else if (service.payment_status === 'partially_paid') {
@@ -68,11 +70,33 @@ export function ServicesByDate({ services, onMarkPaid, onDelete, userRole }: Ser
       }
       return sum;
     }, 0);
+    
+    // Total amount for the day (includes unpaid amounts)
+    const totalAmountForDay = services.reduce((sum, service) => sum + service.amount, 0);
+    
+    // Unpaid amounts
+    const unpaidAmounts = services.reduce((sum, service) => {
+      if (service.payment_status === 'not_paid') {
+        return sum + service.amount;
+      } else if (service.payment_status === 'partially_paid') {
+        return sum + (service.amount - (service.deposit_amount || 0));
+      }
+      return sum;
+    }, 0);
+    
     const paidCount = services.filter(s => s.payment_status === 'fully_paid').length;
     const partialCount = services.filter(s => s.payment_status === 'partially_paid').length;
     const unpaidCount = services.filter(s => s.payment_status === 'not_paid').length;
 
-    return { totalServices, totalAmount, paidCount, partialCount, unpaidCount };
+    return { 
+      totalServices, 
+      totalAmountCollected, 
+      totalAmountForDay, 
+      unpaidAmounts, 
+      paidCount, 
+      partialCount, 
+      unpaidCount 
+    };
   };
 
   const getPaymentStatusBadge = (service: Service) => {
@@ -125,7 +149,10 @@ export function ServicesByDate({ services, onMarkPaid, onDelete, userRole }: Ser
                           {format(parseISO(date), 'EEEE, MMMM d, yyyy')}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          {summary.totalServices} services • {formatCurrency(summary.totalAmount)} collected
+                          {summary.totalServices} services • Total: {formatCurrency(summary.totalAmountForDay)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Collected: {formatCurrency(summary.totalAmountCollected)} • Outstanding: {formatCurrency(summary.unpaidAmounts)}
                         </p>
                       </div>
                     </div>
