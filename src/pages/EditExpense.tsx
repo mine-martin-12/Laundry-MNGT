@@ -47,6 +47,7 @@ const EditExpense = () => {
     "Marketing",
     "Insurance",
     "Maintenance",
+    "Repairs",
     "Other",
   ];
 
