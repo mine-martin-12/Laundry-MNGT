@@ -1,27 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate, Link } from 'react-router-dom';
-import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ShirtIcon, 
-  DollarSign, 
-  TrendingUp, 
+import React, { useState, useEffect } from "react";
+import { Navigate, Link } from "react-router-dom";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  ShirtIcon,
+  DollarSign,
+  TrendingUp,
   Users,
   Package,
   AlertCircle,
   Plus,
-  Clock
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/currency';
-import { DateRangeFilter, DateRange } from '@/components/DateRangeFilter';
-import { startOfDay, endOfDay } from 'date-fns';
+  Clock,
+  Calendar,
+} from "lucide-react";
+import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
+import { DateRangeFilter, DateRange } from "@/components/DateRangeFilter";
+import { startOfDay, endOfDay, format } from "date-fns";
 
 interface DashboardStats {
   totalServices: number;
+  todayServices: number;
   periodServices: number;
   pendingPayments: number;
   pendingRevenue: number;
@@ -37,6 +45,7 @@ const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalServices: 0,
+    todayServices: 0,
     periodServices: 0,
     pendingPayments: 0,
     pendingRevenue: 0,
@@ -45,11 +54,11 @@ const Dashboard = () => {
     totalExpenses: 0,
     recentServices: [],
     unpaidServices: [],
-    partialServices: []
+    partialServices: [],
   });
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(new Date()),
-    to: endOfDay(new Date())
+    to: endOfDay(new Date()),
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -62,81 +71,171 @@ const Dashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       const businessId = userProfile.business_id;
+      const today = new Date();
+      const todayStart = startOfDay(today);
+      const todayEnd = endOfDay(today);
 
       // Fetch ALL services for all-time calculations
-      const { data: allServices } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false });
+      const { data: allServices, error: allServicesError } = await supabase
+        .from("services")
+        .select("*")
+        .eq("business_id", businessId)
+        .order("service_date", { ascending: false });
+
+      if (allServicesError) {
+        console.error("Error fetching all services:", allServicesError);
+        throw allServicesError;
+      }
+
+      // Fetch TODAY'S services based on service_date
+      const { data: todayServices, error: todayError } = await supabase
+        .from("services")
+        .select("*")
+        .eq("business_id", businessId)
+        .gte("service_date", format(todayStart, "yyyy-MM-dd"))
+        .lte("service_date", format(todayEnd, "yyyy-MM-dd"))
+        .order("service_date", { ascending: false });
+
+      if (todayError) {
+        console.error("Error fetching today services:", todayError);
+        throw todayError;
+      }
 
       // Fetch services data filtered by date range for period calculations
-      const { data: periodServices } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', businessId)
-        .gte('service_date', dateRange.from.toISOString().split('T')[0])
-        .lte('service_date', dateRange.to.toISOString().split('T')[0])
-        .order('created_at', { ascending: false });
+      const { data: periodServices, error: periodError } = await supabase
+        .from("services")
+        .select("*")
+        .eq("business_id", businessId)
+        .gte("service_date", format(dateRange.from, "yyyy-MM-dd"))
+        .lte("service_date", format(dateRange.to, "yyyy-MM-dd"))
+        .order("service_date", { ascending: false });
+
+      if (periodError) {
+        console.error("Error fetching period services:", periodError);
+        throw periodError;
+      }
 
       // Fetch expenses data filtered by date range
-      const { data: expenses } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('business_id', businessId)
-        .gte('expense_date', dateRange.from.toISOString().split('T')[0])
-        .lte('expense_date', dateRange.to.toISOString().split('T')[0]);
+      const { data: expenses, error: expensesError } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("business_id", businessId)
+        .gte("expense_date", format(dateRange.from, "yyyy-MM-dd"))
+        .lte("expense_date", format(dateRange.to, "yyyy-MM-dd"));
+
+      if (expensesError) {
+        console.error("Error fetching expenses:", expensesError);
+        throw expensesError;
+      }
 
       // Fetch credits data (all-time for pending calculations)
-      const { data: credits } = await supabase
-        .from('credits')
-        .select('*')
-        .eq('business_id', businessId);
+      const { data: credits, error: creditsError } = await supabase
+        .from("credits")
+        .select("*")
+        .eq("business_id", businessId);
 
-      if (allServices && periodServices && expenses) {
+      if (creditsError) {
+        console.error("Error fetching credits:", creditsError);
+        // Don't throw here, credits might not exist
+      }
+
+      if (allServices && todayServices && periodServices) {
         // ALL-TIME calculations
-        const allFullyPaidServices = allServices.filter(s => s.payment_status === 'fully_paid');
-        const allPartiallyPaidServices = allServices.filter(s => s.payment_status === 'partially_paid');
-        const allUnpaidServices = allServices.filter(s => s.payment_status === 'not_paid');
+        const allFullyPaidServices = allServices.filter(
+          (s) => s.payment_status === "fully_paid"
+        );
+        const allPartiallyPaidServices = allServices.filter(
+          (s) => s.payment_status === "partially_paid"
+        );
+        const allUnpaidServices = allServices.filter(
+          (s) => s.payment_status === "not_paid"
+        );
 
         // Total revenue (all-time) - actual money received
-        const totalRevenue = allFullyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0) +
-          allPartiallyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.deposit_amount || 0)), 0);
+        const totalRevenue =
+          allFullyPaidServices.reduce(
+            (sum, s) => sum + parseFloat(String(s.amount || 0)),
+            0
+          ) +
+          allPartiallyPaidServices.reduce(
+            (sum, s) => sum + parseFloat(String(s.deposit_amount || 0)),
+            0
+          );
 
         // Pending revenue (all-time) - money still owed
-        const allUnpaidAmounts = allUnpaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0);
-        const allRemainingBalances = allPartiallyPaidServices.reduce((sum, s) => 
-          sum + (parseFloat(String(s.amount)) - parseFloat(String(s.deposit_amount || 0))), 0);
-        const creditAmounts = credits ? credits.reduce((sum, c) => sum + parseFloat(String(c.amount)), 0) : 0;
-        const pendingRevenue = allUnpaidAmounts + allRemainingBalances + creditAmounts;
+        const allUnpaidAmounts = allUnpaidServices.reduce(
+          (sum, s) => sum + parseFloat(String(s.amount || 0)),
+          0
+        );
+        const allRemainingBalances = allPartiallyPaidServices.reduce(
+          (sum, s) =>
+            sum +
+            (parseFloat(String(s.amount || 0)) -
+              parseFloat(String(s.deposit_amount || 0))),
+          0
+        );
+        const creditAmounts = credits
+          ? credits.reduce(
+              (sum, c) => sum + parseFloat(String(c.amount || 0)),
+              0
+            )
+          : 0;
+        const pendingRevenue =
+          allUnpaidAmounts + allRemainingBalances + creditAmounts;
 
         // PERIOD calculations
-        const periodFullyPaidServices = periodServices.filter(s => s.payment_status === 'fully_paid');
-        const periodPartiallyPaidServices = periodServices.filter(s => s.payment_status === 'partially_paid');
-        const periodUnpaidServices = periodServices.filter(s => s.payment_status === 'not_paid');
+        const periodFullyPaidServices = periodServices.filter(
+          (s) => s.payment_status === "fully_paid"
+        );
+        const periodPartiallyPaidServices = periodServices.filter(
+          (s) => s.payment_status === "partially_paid"
+        );
 
         // Period revenue - money received in selected period
-        const periodRevenue = periodFullyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.amount)), 0) +
-          periodPartiallyPaidServices.reduce((sum, s) => sum + parseFloat(String(s.deposit_amount || 0)), 0);
+        const periodRevenue =
+          periodFullyPaidServices.reduce(
+            (sum, s) => sum + parseFloat(String(s.amount || 0)),
+            0
+          ) +
+          periodPartiallyPaidServices.reduce(
+            (sum, s) => sum + parseFloat(String(s.deposit_amount || 0)),
+            0
+          );
 
-        const totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(String(e.amount)), 0);
+        const totalExpenses = expenses
+          ? expenses.reduce(
+              (sum, e) => sum + parseFloat(String(e.amount || 0)),
+              0
+            )
+          : 0;
+
+        console.log("Dashboard Stats Debug:", {
+          allServicesCount: allServices.length,
+          todayServicesCount: todayServices.length,
+          periodServicesCount: periodServices.length,
+          todayDate: format(todayStart, "yyyy-MM-dd"),
+          dateRangeFrom: format(dateRange.from, "yyyy-MM-dd"),
+          dateRangeTo: format(dateRange.to, "yyyy-MM-dd"),
+        });
 
         setStats({
           totalServices: allServices.length,
+          todayServices: todayServices.length,
           periodServices: periodServices.length,
-          pendingPayments: allUnpaidServices.length + allPartiallyPaidServices.length,
+          pendingPayments:
+            allUnpaidServices.length + allPartiallyPaidServices.length,
           pendingRevenue,
           periodRevenue,
           totalRevenue,
           totalExpenses,
           recentServices: periodServices.slice(0, 5),
           unpaidServices: allUnpaidServices.slice(0, 3),
-          partialServices: allPartiallyPaidServices.slice(0, 2)
+          partialServices: allPartiallyPaidServices.slice(0, 2),
         });
       }
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      toast.error('Failed to load dashboard data');
+      console.error("Error fetching dashboard stats:", error);
+      toast.error("Failed to load dashboard data");
     }
 
     setLoadingStats(false);
@@ -145,17 +244,17 @@ const Dashboard = () => {
   const markServiceAsPaid = async (serviceId: string) => {
     try {
       const { error } = await supabase
-        .from('services')
-        .update({ payment_status: 'fully_paid' })
-        .eq('id', serviceId);
+        .from("services")
+        .update({ payment_status: "fully_paid" })
+        .eq("id", serviceId);
 
       if (error) throw error;
 
-      toast.success('Service marked as paid');
+      toast.success("Service marked as paid");
       fetchDashboardStats();
     } catch (error) {
-      console.error('Error updating service:', error);
-      toast.error('Failed to update service');
+      console.error("Error updating service:", error);
+      toast.error("Failed to update service");
     }
   };
 
@@ -172,14 +271,22 @@ const Dashboard = () => {
     );
   }
 
+  const isToday =
+    dateRange.from.toDateString() === dateRange.to.toDateString() &&
+    dateRange.from.toDateString() === new Date().toDateString();
+
   return (
     <div className="bg-background p-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Business Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back! Here's an overview of your laundry business.</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Business Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Welcome back! Here's an overview of your laundry business.
+            </p>
           </div>
           <DateRangeFilter onDateRangeChange={setDateRange} />
         </div>
@@ -199,20 +306,28 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Period Services</CardTitle>
-            <ShirtIcon className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              {isToday ? "Today's Services" : "Period Services"}
+            </CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{stats.periodServices}</div>
+            <div className="text-xl sm:text-2xl font-bold">
+              {isToday ? stats.todayServices : stats.periodServices}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Services in selected period
+              {isToday
+                ? "Services scheduled for today"
+                : "Services in selected period"}
             </p>
           </CardContent>
         </Card>
 
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Revenue
+            </CardTitle>
             <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
@@ -227,7 +342,9 @@ const Dashboard = () => {
 
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Period Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Period Revenue
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
@@ -246,9 +363,65 @@ const Dashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
+            <div className="text-xl sm:text-2xl font-bold">
+              {formatCurrency(stats.totalRevenue)}
+            </div>
             <p className="text-xs text-muted-foreground">
               All-time revenue collected
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <Card className="shadow-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Services
+            </CardTitle>
+            <ShirtIcon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold">
+              {stats.totalServices}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              All-time services processed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Pending Payments
+            </CardTitle>
+            <AlertCircle className="h-4 w-4 text-warning" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold text-warning">
+              {stats.pendingPayments}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Services awaiting payment
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Period Expenses
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold text-destructive">
+              {formatCurrency(stats.totalExpenses)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Expenses in selected period
             </p>
           </CardContent>
         </Card>
@@ -263,14 +436,20 @@ const Dashboard = () => {
           </Button>
         </Link>
         <Link to="/expenses/new" className="w-full sm:w-auto">
-          <Button variant="outline" className="shadow-soft w-full sm:w-auto h-10">
+          <Button
+            variant="outline"
+            className="shadow-soft w-full sm:w-auto h-10"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Record Expense
           </Button>
         </Link>
-        {userProfile?.role === 'admin' && (
+        {userProfile?.role === "admin" && (
           <Link to="/users/new" className="w-full sm:w-auto">
-            <Button variant="outline" className="shadow-soft w-full sm:w-auto h-10">
+            <Button
+              variant="outline"
+              className="shadow-soft w-full sm:w-auto h-10"
+            >
               <Users className="h-4 w-4 mr-2" />
               Manage Users
             </Button>
@@ -289,24 +468,45 @@ const Dashboard = () => {
             {stats.recentServices.length > 0 ? (
               <div className="space-y-3 sm:space-y-4">
                 {stats.recentServices.map((service) => (
-                  <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted/50 rounded-lg gap-2 sm:gap-0">
+                  <div
+                    key={service.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted/50 rounded-lg gap-2 sm:gap-0"
+                  >
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{service.customer_name}</p>
-                      <p className="text-sm text-muted-foreground truncate">{service.service_type}</p>
+                      <p className="font-medium truncate">
+                        {service.customer_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {service.service_type}
+                      </p>
                       <p className="text-xs text-muted-foreground">
+                        Service:{" "}
                         {new Date(service.service_date).toLocaleDateString()}
                       </p>
                     </div>
-                     <div className="text-left sm:text-right flex-shrink-0">
-                       <p className="font-medium">{formatCurrency(parseFloat(String(service.amount)))}</p>
-                       <Badge variant={
-                         service.payment_status === 'fully_paid' ? 'default' : 
-                         service.payment_status === 'partially_paid' ? 'secondary' : 'outline'
-                       } className="w-fit">
-                         {service.payment_status === 'fully_paid' ? 'Paid' : 
-                          service.payment_status === 'partially_paid' ? 'Partial' : 'Unpaid'}
-                       </Badge>
-                     </div>
+                    <div className="text-left sm:text-right flex-shrink-0">
+                      <p className="font-medium">
+                        {formatCurrency(
+                          parseFloat(String(service.amount || 0))
+                        )}
+                      </p>
+                      <Badge
+                        variant={
+                          service.payment_status === "fully_paid"
+                            ? "default"
+                            : service.payment_status === "partially_paid"
+                            ? "secondary"
+                            : "outline"
+                        }
+                        className="w-fit"
+                      >
+                        {service.payment_status === "fully_paid"
+                          ? "Paid"
+                          : service.payment_status === "partially_paid"
+                          ? "Partial"
+                          : "Unpaid"}
+                      </Badge>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -327,28 +527,48 @@ const Dashboard = () => {
               <AlertCircle className="h-5 w-5 text-warning" />
               Outstanding Payments
             </CardTitle>
-            <CardDescription>Services requiring payment collection</CardDescription>
+            <CardDescription>
+              Services requiring payment collection
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {(stats.unpaidServices.length > 0 || stats.partialServices.length > 0) ? (
+            {stats.unpaidServices.length > 0 ||
+            stats.partialServices.length > 0 ? (
               <div className="space-y-3 sm:space-y-4">
                 {/* Unpaid Services */}
                 {stats.unpaidServices.map((service) => (
-                  <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-destructive/10 border border-destructive/20 rounded-lg gap-3">
+                  <div
+                    key={service.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-destructive/10 border border-destructive/20 rounded-lg gap-3"
+                  >
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{service.customer_name}</p>
-                      <p className="text-sm text-muted-foreground truncate">{service.service_type}</p>
+                      <p className="font-medium truncate">
+                        {service.customer_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {service.service_type}
+                      </p>
                       <p className="text-xs text-muted-foreground">
+                        Service:{" "}
                         {new Date(service.service_date).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="text-left sm:text-right">
-                        <p className="font-medium">{formatCurrency(parseFloat(String(service.amount)))}</p>
-                        <Badge variant="outline" className="w-fit border-destructive text-destructive">Unpaid</Badge>
+                        <p className="font-medium">
+                          {formatCurrency(
+                            parseFloat(String(service.amount || 0))
+                          )}
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className="w-fit border-destructive text-destructive"
+                        >
+                          Unpaid
+                        </Badge>
                       </div>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={() => markServiceAsPaid(service.id)}
                         className="bg-success hover:bg-success/90 w-full sm:w-auto h-9"
                       >
@@ -357,28 +577,52 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ))}
-                
+
                 {/* Partially Paid Services */}
                 {stats.partialServices.map((service) => (
-                  <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg gap-3">
+                  <div
+                    key={service.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg gap-3"
+                  >
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{service.customer_name}</p>
-                      <p className="text-sm text-muted-foreground truncate">{service.service_type}</p>
+                      <p className="font-medium truncate">
+                        {service.customer_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {service.service_type}
+                      </p>
                       <p className="text-xs text-muted-foreground">
+                        Service:{" "}
                         {new Date(service.service_date).toLocaleDateString()}
                       </p>
                       <p className="text-xs text-warning">
-                        Paid: {formatCurrency(parseFloat(String(service.deposit_amount || 0)))} • 
-                        Remaining: {formatCurrency(parseFloat(String(service.amount)) - parseFloat(String(service.deposit_amount || 0)))}
+                        Paid:{" "}
+                        {formatCurrency(
+                          parseFloat(String(service.deposit_amount || 0))
+                        )}{" "}
+                        • Remaining:{" "}
+                        {formatCurrency(
+                          parseFloat(String(service.amount || 0)) -
+                            parseFloat(String(service.deposit_amount || 0))
+                        )}
                       </p>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="text-left sm:text-right">
-                        <p className="font-medium">{formatCurrency(parseFloat(String(service.amount)))}</p>
-                        <Badge variant="secondary" className="w-fit bg-warning text-warning-foreground">Partial</Badge>
+                        <p className="font-medium">
+                          {formatCurrency(
+                            parseFloat(String(service.amount || 0))
+                          )}
+                        </p>
+                        <Badge
+                          variant="secondary"
+                          className="w-fit bg-warning text-warning-foreground"
+                        >
+                          Partial
+                        </Badge>
                       </div>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={() => markServiceAsPaid(service.id)}
                         className="bg-success hover:bg-success/90 w-full sm:w-auto h-9"
                       >

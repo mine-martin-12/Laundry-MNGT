@@ -1,14 +1,14 @@
-import React from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  ShirtIcon, 
-  Receipt, 
-  Users, 
-  Settings, 
+import React from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  ShirtIcon,
+  Receipt,
+  Users,
+  Settings,
   LogOut,
-  ChevronRight
-} from 'lucide-react';
+  ChevronRight,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -23,14 +23,19 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  useSidebar
-} from '@/components/ui/sidebar';
-import { useAuth } from '@/components/AuthProvider';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/components/AuthProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useTheme } from "next-themes";
 
 const navigationItems = [
   {
@@ -39,13 +44,13 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Services", 
+    title: "Services",
     url: "/services",
     icon: ShirtIcon,
   },
   {
     title: "Expenses",
-    url: "/expenses", 
+    url: "/expenses",
     icon: Receipt,
   },
   {
@@ -60,9 +65,12 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { open } = useSidebar();
-  const [businessName, setBusinessName] = React.useState<string>('Business Hub');
-  
+  const [businessName, setBusinessName] =
+    React.useState<string>("Business Hub");
+
   const currentPath = location.pathname;
+
+  const { theme, setTheme } = useTheme();
 
   // Fetch business name
   React.useEffect(() => {
@@ -70,38 +78,38 @@ export function AppSidebar() {
       if (userProfile?.business_id) {
         try {
           const { data, error } = await supabase
-            .from('businesses')
-            .select('name')
-            .eq('id', userProfile.business_id)
+            .from("businesses")
+            .select("name")
+            .eq("id", userProfile.business_id)
             .single();
 
           if (data && !error) {
             setBusinessName(data.name);
           }
         } catch (error) {
-          console.error('Error fetching business name:', error);
+          console.error("Error fetching business name:", error);
         }
       }
     };
 
     fetchBusinessName();
   }, [userProfile?.business_id]);
-  
+
   const isActive = (path: string) => {
-    if (path === '/') {
-      return currentPath === '/';
+    if (path === "/") {
+      return currentPath === "/";
     }
     return currentPath.startsWith(path);
   };
-  
+
   // Simplified since we no longer have sub-items
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/auth');
+      navigate("/auth");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -112,7 +120,7 @@ export function AppSidebar() {
     if (firstName) {
       return firstName[0].toUpperCase();
     }
-    return user?.email?.[0]?.toUpperCase() || 'U';
+    return user?.email?.[0]?.toUpperCase() || "U";
   };
 
   return (
@@ -124,8 +132,12 @@ export function AppSidebar() {
           </div>
           {open && (
             <div className="flex flex-col">
-              <h2 className="font-semibold text-sidebar-foreground">{businessName}</h2>
-              <p className="text-xs text-sidebar-foreground/60">Management System</p>
+              <h2 className="font-semibold text-sidebar-foreground">
+                {businessName}
+              </h2>
+              <p className="text-xs text-sidebar-foreground/60">
+                Management System
+              </p>
             </div>
           )}
         </div>
@@ -133,7 +145,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          {/* <SidebarGroupLabel>Navigation</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
@@ -156,50 +168,60 @@ export function AppSidebar() {
           {open && (
             <div className="flex items-center gap-3 px-2 py-1">
               <Avatar className="h-8 w-8">
-                <AvatarFallback>{getInitials(userProfile?.first_name, userProfile?.last_name)}</AvatarFallback>
+                <AvatarFallback>
+                  {getInitials(userProfile?.first_name, userProfile?.last_name)}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {userProfile?.first_name && userProfile?.last_name 
+                  {userProfile?.first_name && userProfile?.last_name
                     ? `${userProfile.first_name} ${userProfile.last_name}`
-                    : user?.email
-                  }
+                    : user?.email}
                 </p>
                 <p className="text-xs text-sidebar-foreground/60 capitalize">
-                  {userProfile?.role || 'User'}
+                  {userProfile?.role || "User"}
                 </p>
               </div>
             </div>
           )}
-          
-            <div className="flex flex-col gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <NavLink to="/settings">
-                  <Settings className="h-4 w-4" />
-                  {open && <span className="ml-2">Settings</span>}
-                </NavLink>
-              </Button>
-              
-              <div className="flex items-center">
+
+          <div className="flex flex-col gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              <NavLink to="/settings">
+                <Settings className="h-4 w-4" />
+                {open && <span className="ml-2">Settings</span>}
+              </NavLink>
+            </Button>
+
+            <div
+              className="flex items-center cursor-pointer hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-9 px-3 rounded-md justify-start"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            >
+              <div className="flex items-center justify-center w-4 h-4">
                 <ThemeToggle />
-                {open && <span className="ml-2 text-sm text-sidebar-foreground">Theme</span>}
               </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <LogOut className="h-4 w-4" />
-                {open && <span className="ml-2">Sign Out</span>}
-              </Button>
+              {open && (
+                <span className="ml-2 text-sm text-sidebar-foreground">
+                  Theme
+                </span>
+              )}
             </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              {open && <span className="ml-2">Sign Out</span>}
+            </Button>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>
