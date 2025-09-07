@@ -127,15 +127,15 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border" collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <ShirtIcon className="h-4 w-4 text-primary-foreground" />
+          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
+            <ShirtIcon className="h-7 w-7 text-primary-foreground" />
           </div>
           {open && (
             <div className="flex flex-col">
               <h2 className="font-semibold text-sidebar-foreground">
                 {businessName}
               </h2>
-              <p className="text-xs text-sidebar-foreground/60">
+              <p className="text-xs text-sidebar-foreground/60 ">
                 Management System
               </p>
             </div>
