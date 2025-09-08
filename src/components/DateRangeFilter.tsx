@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Calendar, CalendarIcon, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,12 +35,12 @@ const predefinedRanges = {
   custom: { label: 'Custom Range', days: null }
 };
 
-export function DateRangeFilter({ onDateRangeChange, defaultRange = 'today' }: DateRangeFilterProps) {
+export const DateRangeFilter = React.memo<DateRangeFilterProps>(({ onDateRangeChange, defaultRange = 'today' }) => {
   const [selectedRange, setSelectedRange] = useState(defaultRange);
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [isCustomOpen, setIsCustomOpen] = useState(false);
 
-  const getCurrentDateRange = (): DateRange => {
+  const getCurrentDateRange = useCallback((): DateRange => {
     const now = new Date();
     
     if (selectedRange === 'custom') {
@@ -62,9 +62,9 @@ export function DateRangeFilter({ onDateRangeChange, defaultRange = 'today' }: D
       from: startOfDay(subDays(now, range.days - 1)),
       to: endOfDay(now)
     };
-  };
+  }, [selectedRange, customRange]);
 
-  const handleRangeChange = (value: string) => {
+  const handleRangeChange = useCallback((value: string) => {
     setSelectedRange(value);
     
     if (value !== 'custom') {
@@ -87,9 +87,9 @@ export function DateRangeFilter({ onDateRangeChange, defaultRange = 'today' }: D
       
       onDateRangeChange(dateRange);
     }
-  };
+  }, [onDateRangeChange]);
 
-  const handleCustomRangeApply = () => {
+  const handleCustomRangeApply = useCallback(() => {
     if (customRange.from && customRange.to) {
       onDateRangeChange({
         from: startOfDay(customRange.from),
@@ -97,7 +97,7 @@ export function DateRangeFilter({ onDateRangeChange, defaultRange = 'today' }: D
       });
       setIsCustomOpen(false);
     }
-  };
+  }, [customRange, onDateRangeChange]);
 
   // Initialize with default range
   React.useEffect(() => {
@@ -105,13 +105,14 @@ export function DateRangeFilter({ onDateRangeChange, defaultRange = 'today' }: D
     onDateRangeChange(range);
   }, []);
 
-  const currentRange = getCurrentDateRange();
-  const formatDateRange = (range: DateRange) => {
+  const currentRange = useMemo(() => getCurrentDateRange(), [getCurrentDateRange]);
+  
+  const formatDateRange = useMemo(() => {
     if (selectedRange !== 'custom') {
       return predefinedRanges[selectedRange as keyof typeof predefinedRanges].label;
     }
-    return `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d, yyyy')}`;
-  };
+    return `${format(currentRange.from, 'MMM d')} - ${format(currentRange.to, 'MMM d, yyyy')}`;
+  }, [selectedRange, currentRange]);
 
   return (
     <div className="flex items-center gap-2">
@@ -206,8 +207,10 @@ export function DateRangeFilter({ onDateRangeChange, defaultRange = 'today' }: D
       )}
 
       <div className="text-sm text-muted-foreground">
-        {formatDateRange(currentRange)}
+        {formatDateRange}
       </div>
     </div>
   );
-}
+});
+
+DateRangeFilter.displayName = 'DateRangeFilter';

@@ -3,6 +3,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -147,7 +148,8 @@ const Expenses = () => {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        Loading...
+        <LoadingSpinner variant="tetris" size="lg" />
+        <p className="text-muted-foreground">Loading your expenses...</p>
       </div>
     );
   }
@@ -262,7 +264,10 @@ const Expenses = () => {
 
         {/* Expenses List */}
         {loadingExpenses ? (
-          <div className="text-center py-8">Loading expenses...</div>
+          <div className="text-center py-8">
+            <LoadingSpinner variant="tetris" size="md" />
+            <p className="text-muted-foreground">Loading your expenses...</p>
+          </div>
         ) : filteredExpenses.length > 0 ? (
           <ExpensesByDate
             expenses={filteredExpenses}

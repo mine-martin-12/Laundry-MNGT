@@ -25,7 +25,14 @@ import {
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import { DateRangeFilter, DateRange } from "@/components/DateRangeFilter";
-import { startOfDay, endOfDay, format } from "date-fns";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  startOfDay,
+  endOfDay,
+  format,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 
 interface DashboardStats {
   totalServices: number;
@@ -75,6 +82,10 @@ const Dashboard = () => {
       const todayStart = startOfDay(today);
       const todayEnd = endOfDay(today);
 
+      // Current month boundaries
+      const currentMonthStart = startOfMonth(today);
+      const currentMonthEnd = endOfMonth(today);
+
       // Fetch ALL services for all-time calculations
       const { data: allServices, error: allServicesError } = await supabase
         .from("services")
@@ -99,6 +110,20 @@ const Dashboard = () => {
       if (todayError) {
         console.error("Error fetching today services:", todayError);
         throw todayError;
+      }
+
+      // Fetch CURRENT MONTH services for month-based calculations
+      const { data: currentMonthServices, error: monthError } = await supabase
+        .from("services")
+        .select("*")
+        .eq("business_id", businessId)
+        .gte("service_date", format(currentMonthStart, "yyyy-MM-dd"))
+        .lte("service_date", format(currentMonthEnd, "yyyy-MM-dd"))
+        .order("service_date", { ascending: false });
+
+      if (monthError) {
+        console.error("Error fetching current month services:", monthError);
+        throw monthError;
       }
 
       // Fetch services data filtered by date range for period calculations
@@ -128,19 +153,26 @@ const Dashboard = () => {
         throw expensesError;
       }
 
-      // Fetch credits data (all-time for pending calculations)
+      // Fetch credits data (current month for pending calculations)
       const { data: credits, error: creditsError } = await supabase
         .from("credits")
         .select("*")
-        .eq("business_id", businessId);
+        .eq("business_id", businessId)
+        .gte("created_at", currentMonthStart.toISOString())
+        .lte("created_at", currentMonthEnd.toISOString());
 
       if (creditsError) {
         console.error("Error fetching credits:", creditsError);
         // Don't throw here, credits might not exist
       }
 
-      if (allServices && todayServices && periodServices) {
-        // ALL-TIME calculations
+      if (
+        allServices &&
+        todayServices &&
+        currentMonthServices &&
+        periodServices
+      ) {
+        // ALL-TIME calculations (for Total Services only)
         const allFullyPaidServices = allServices.filter(
           (s) => s.payment_status === "fully_paid"
         );
@@ -151,23 +183,34 @@ const Dashboard = () => {
           (s) => s.payment_status === "not_paid"
         );
 
-        // Total revenue (all-time) - actual money received
+        // CURRENT MONTH calculations for revenue and pending amounts
+        const monthFullyPaidServices = currentMonthServices.filter(
+          (s) => s.payment_status === "fully_paid"
+        );
+        const monthPartiallyPaidServices = currentMonthServices.filter(
+          (s) => s.payment_status === "partially_paid"
+        );
+        const monthUnpaidServices = currentMonthServices.filter(
+          (s) => s.payment_status === "not_paid"
+        );
+
+        // Total revenue (CURRENT MONTH ONLY) - actual money received this month
         const totalRevenue =
-          allFullyPaidServices.reduce(
+          monthFullyPaidServices.reduce(
             (sum, s) => sum + parseFloat(String(s.amount || 0)),
             0
           ) +
-          allPartiallyPaidServices.reduce(
+          monthPartiallyPaidServices.reduce(
             (sum, s) => sum + parseFloat(String(s.deposit_amount || 0)),
             0
           );
 
-        // Pending revenue (all-time) - money still owed
-        const allUnpaidAmounts = allUnpaidServices.reduce(
+        // Pending revenue (CURRENT MONTH ONLY) - money still owed for this month's services
+        const monthUnpaidAmounts = monthUnpaidServices.reduce(
           (sum, s) => sum + parseFloat(String(s.amount || 0)),
           0
         );
-        const allRemainingBalances = allPartiallyPaidServices.reduce(
+        const monthRemainingBalances = monthPartiallyPaidServices.reduce(
           (sum, s) =>
             sum +
             (parseFloat(String(s.amount || 0)) -
@@ -181,7 +224,7 @@ const Dashboard = () => {
             )
           : 0;
         const pendingRevenue =
-          allUnpaidAmounts + allRemainingBalances + creditAmounts;
+          monthUnpaidAmounts + monthRemainingBalances + creditAmounts;
 
         // PERIOD calculations
         const periodFullyPaidServices = periodServices.filter(
@@ -212,10 +255,15 @@ const Dashboard = () => {
         console.log("Dashboard Stats Debug:", {
           allServicesCount: allServices.length,
           todayServicesCount: todayServices.length,
+          currentMonthServicesCount: currentMonthServices.length,
           periodServicesCount: periodServices.length,
           todayDate: format(todayStart, "yyyy-MM-dd"),
+          currentMonthStart: format(currentMonthStart, "yyyy-MM-dd"),
+          currentMonthEnd: format(currentMonthEnd, "yyyy-MM-dd"),
           dateRangeFrom: format(dateRange.from, "yyyy-MM-dd"),
           dateRangeTo: format(dateRange.to, "yyyy-MM-dd"),
+          monthlyTotalRevenue: totalRevenue,
+          monthlyPendingRevenue: pendingRevenue,
         });
 
         setStats({
@@ -223,14 +271,14 @@ const Dashboard = () => {
           todayServices: todayServices.length,
           periodServices: periodServices.length,
           pendingPayments:
-            allUnpaidServices.length + allPartiallyPaidServices.length,
-          pendingRevenue,
+            monthUnpaidServices.length + monthPartiallyPaidServices.length, // Current month pending payments
+          pendingRevenue, // Current month pending revenue
           periodRevenue,
-          totalRevenue,
+          totalRevenue, // Current month total revenue
           totalExpenses,
           recentServices: periodServices.slice(0, 5),
-          unpaidServices: allUnpaidServices.slice(0, 3),
-          partialServices: allPartiallyPaidServices.slice(0, 2),
+          unpaidServices: allUnpaidServices.slice(0, 3), // Show all unpaid for action items
+          partialServices: allPartiallyPaidServices.slice(0, 2), // Show all partial for action items
         });
       }
     } catch (error) {
@@ -266,7 +314,10 @@ const Dashboard = () => {
   if (loading || loadingStats) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">Loading...</div>
+        <div className="text-center space-y-4">
+          <LoadingSpinner variant="tetris" size="lg" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -274,6 +325,8 @@ const Dashboard = () => {
   const isToday =
     dateRange.from.toDateString() === dateRange.to.toDateString() &&
     dateRange.from.toDateString() === new Date().toDateString();
+
+  const currentMonth = format(new Date(), "MMMM yyyy");
 
   return (
     <div className="bg-background p-6">
@@ -326,7 +379,7 @@ const Dashboard = () => {
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Pending Revenue
+              {currentMonth} Pending Revenue
             </CardTitle>
             <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
@@ -335,7 +388,7 @@ const Dashboard = () => {
               {formatCurrency(stats.pendingRevenue)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Unpaid + remaining balances
+              Unpaid + remaining balances this month
             </p>
           </CardContent>
         </Card>
@@ -359,7 +412,9 @@ const Dashboard = () => {
 
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {currentMonth} Revenue
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -367,7 +422,7 @@ const Dashboard = () => {
               {formatCurrency(stats.totalRevenue)}
             </div>
             <p className="text-xs text-muted-foreground">
-              All-time revenue collected
+              Revenue collected this month
             </p>
           </CardContent>
         </Card>
@@ -395,7 +450,7 @@ const Dashboard = () => {
         <Card className="shadow-medium">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Pending Payments
+              {currentMonth} Pending Payments
             </CardTitle>
             <AlertCircle className="h-4 w-4 text-warning" />
           </CardHeader>
@@ -404,7 +459,7 @@ const Dashboard = () => {
               {stats.pendingPayments}
             </div>
             <p className="text-xs text-muted-foreground">
-              Services awaiting payment
+              Services awaiting payment this month
             </p>
           </CardContent>
         </Card>
