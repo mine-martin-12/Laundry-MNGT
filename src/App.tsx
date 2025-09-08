@@ -21,6 +21,7 @@ import AddUser from "./pages/AddUser";
 import EditUser from "./pages/EditUser";
 import Settings from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
+import ActivityHistory from "./pages/ActivityHistory";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
                       <Route path="/users/new" element={<AddUser />} />
                       <Route path="/users/edit/:id" element={<EditUser />} />
                       <Route path="/settings" element={<Settings />} />
+                      <Route path="/activity-history" element={<ActivityHistory />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>

@@ -151,9 +151,9 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} className="text-base md:text-sm">
-                      <item.icon className="h-5 w-5 md:h-4 md:w-4" />
-                      <span className="text-base md:text-sm font-medium">{item.title}</span>
+                    <NavLink to={item.url} className="text-lg md:text-base">
+                      <item.icon className="h-6 w-6 md:h-5 md:w-5" />
+                      <span className="text-lg md:text-base font-medium">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -173,12 +173,12 @@ export function AppSidebar() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-base md:text-sm font-medium text-sidebar-foreground truncate">
+                <p className="text-lg md:text-base font-medium text-sidebar-foreground truncate">
                   {userProfile?.first_name && userProfile?.last_name
                     ? `${userProfile.first_name} ${userProfile.last_name}`
                     : user?.email}
                 </p>
-                <p className="text-sm md:text-xs text-sidebar-foreground/60 capitalize">
+                <p className="text-base md:text-sm text-sidebar-foreground/60 capitalize">
                   {userProfile?.role || "User"}
                 </p>
               </div>
@@ -193,8 +193,8 @@ export function AppSidebar() {
               className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <NavLink to="/settings">
-                <Settings className="h-5 w-5 md:h-4 md:w-4" />
-                {open && <span className="ml-2 text-base md:text-sm">Settings</span>}
+                <Settings className="h-6 w-6 md:h-5 md:w-5" />
+                {open && <span className="ml-2 text-lg md:text-base">Settings</span>}
               </NavLink>
             </Button>
 
@@ -206,7 +206,7 @@ export function AppSidebar() {
                 <ThemeToggle />
               </div>
               {open && (
-                <span className="ml-2 text-base md:text-sm text-sidebar-foreground">
+                <span className="ml-2 text-lg md:text-base text-sidebar-foreground">
                   Theme
                 </span>
               )}
@@ -218,8 +218,8 @@ export function AppSidebar() {
               onClick={handleSignOut}
               className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
-              <LogOut className="h-5 w-5 md:h-4 md:w-4" />
-              {open && <span className="ml-2 text-base md:text-sm">Sign Out</span>}
+              <LogOut className="h-6 w-6 md:h-5 md:w-5" />
+              {open && <span className="ml-2 text-lg md:text-base">Sign Out</span>}
             </Button>
           </div>
         </div>
