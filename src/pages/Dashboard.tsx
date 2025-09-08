@@ -277,7 +277,7 @@ const Dashboard = () => {
           totalRevenue, // Current month total revenue
           totalExpenses,
           recentServices: periodServices.slice(0, 5),
-          unpaidServices: allUnpaidServices.slice(0, 3), // Show all unpaid for action items
+          unpaidServices: allUnpaidServices.slice(0, 5), // Show 5 unpaid for action items
           partialServices: allPartiallyPaidServices.slice(0, 2), // Show all partial for action items
         });
       }
@@ -335,10 +335,10 @@ const Dashboard = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              Business Dashboard
+              Welcome back, {userProfile?.first_name}!
             </h1>
             <p className="text-muted-foreground">
-              Welcome back! Here's an overview of your laundry business.
+              Here's what's happening with your laundry business.
             </p>
           </div>
           <DateRangeFilter onDateRangeChange={setDateRange} />
@@ -346,14 +346,14 @@ const Dashboard = () => {
       </div>
 
       {/* Welcome Message */}
-      <div className="mb-8">
+      {/*<div className="mb-8">
         <h2 className="text-3xl font-bold text-foreground">
           Welcome back, {userProfile?.first_name}!
         </h2>
         <p className="text-muted-foreground mt-2">
           Here's what's happening with your laundry business today.
         </p>
-      </div>
+      </div>*/}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">

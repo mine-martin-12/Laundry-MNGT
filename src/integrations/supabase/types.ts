@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action_type: string
+          business_id: string
+          created_at: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          reason: string
+          record_id: string
+          table_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          business_id: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          reason: string
+          record_id: string
+          table_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          reason?: string
+          record_id?: string
+          table_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           created_at: string
@@ -127,6 +177,110 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          message_type: string
+          name: string
+          template_content: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          message_type: string
+          name: string
+          template_content: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          message_type?: string
+          name?: string
+          template_content?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          business_id: string
+          created_at: string
+          customer_name: string
+          id: string
+          message_content: string
+          message_type: string
+          phone_number: string
+          scheduled_for: string | null
+          sent_at: string | null
+          service_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          customer_name: string
+          id?: string
+          message_content: string
+          message_type: string
+          phone_number: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          service_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          customer_name?: string
+          id?: string
+          message_content?: string
+          message_type?: string
+          phone_number?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          service_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           business_id: string
@@ -181,6 +335,7 @@ export type Database = {
           id: string
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           payment_status: Database["public"]["Enums"]["payment_status_new"]
+          phone_number: string | null
           service_date: string
           service_type: string
           updated_at: string
@@ -197,6 +352,7 @@ export type Database = {
           id?: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status_new"]
+          phone_number?: string | null
           service_date?: string
           service_type: string
           updated_at?: string
@@ -213,6 +369,7 @@ export type Database = {
           id?: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status_new"]
+          phone_number?: string | null
           service_date?: string
           service_type?: string
           updated_at?: string

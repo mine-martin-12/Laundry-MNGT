@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { ActivityLogger } from "@/lib/activity-logger";
 import { toast } from "sonner";
 
 const AddService = () => {
@@ -32,6 +34,7 @@ const AddService = () => {
     deposit_amount: "",
     due_date: "",
     description: "",
+    phone_number: "",
   });
 
   const serviceTypes = [
@@ -153,8 +156,19 @@ const AddService = () => {
                 Create a new service record
               </p>
             </div>
-          </div>
-        </div>
+                </div>
+
+                {/* Phone Number */}
+                <div className="space-y-2">
+                  <PhoneInput
+                    value={formData.phone_number}
+                    onChange={(value) => handleInputChange("phone_number", value)}
+                    label="Customer Phone"
+                    placeholder="e.g. 0712345678 or +254712345678"
+                    required={false}
+                  />
+                </div>
+              </div>
       </header>
 
       {/* Main Content */}

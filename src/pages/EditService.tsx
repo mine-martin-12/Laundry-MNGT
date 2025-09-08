@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save } from 'lucide-react';
+import { PhoneInput } from "@/components/ui/phone-input";
+import { ReasonDialog } from "@/components/ui/reason-dialog";
+import { ActivityLogger } from "@/lib/activity-logger";
 import { toast } from 'sonner';
 
 interface ServiceFormData {
@@ -21,6 +24,7 @@ interface ServiceFormData {
   deposit_amount: string;
   due_date: string;
   description: string;
+  phone_number: string;
 }
 
 const EditService = () => {
@@ -37,10 +41,13 @@ const EditService = () => {
     payment_method: 'cash',
     deposit_amount: '',
     due_date: '',
-    description: ''
+    description: '',
+    phone_number: ''
   });
+  const [originalData, setOriginalData] = useState<ServiceFormData | null>(null);
   const [loadingService, setLoadingService] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showReasonDialog, setShowReasonDialog] = useState(false);
 
   const serviceTypes = [
     'Wash & Fold',
@@ -79,7 +86,7 @@ const EditService = () => {
       if (error) throw error;
 
       if (data) {
-        setFormData({
+        const serviceData = {
           customer_name: data.customer_name,
           service_type: data.service_type,
           amount: data.amount.toString(),
@@ -88,8 +95,11 @@ const EditService = () => {
           payment_method: data.payment_method || 'cash',
           deposit_amount: data.deposit_amount ? data.deposit_amount.toString() : '',
           due_date: data.due_date || '',
-          description: data.description || ''
-        });
+          description: data.description || '',
+          phone_number: data.phone_number || ''
+        };
+        setFormData(serviceData);
+        setOriginalData(serviceData);
       }
     } catch (error) {
       console.error('Error fetching service:', error);
@@ -112,6 +122,11 @@ const EditService = () => {
       return;
     }
 
+    // Show reason dialog for updates
+    setShowReasonDialog(true);
+  };
+
+  const handleUpdateWithReason = async (reason: string) => {
     setSubmitting(true);
 
     try {
@@ -127,11 +142,22 @@ const EditService = () => {
           deposit_amount: formData.deposit_amount ? parseFloat(formData.deposit_amount) : 0,
           due_date: formData.due_date || null,
           description: formData.description || null,
+          phone_number: formData.phone_number || null,
         })
         .eq('id', id)
         .eq('business_id', userProfile.business_id);
 
       if (error) throw error;
+
+      // Log activity
+      await ActivityLogger.logServiceUpdate(
+        id!,
+        originalData,
+        formData,
+        reason,
+        userProfile.business_id,
+        user.id
+      );
 
       toast.success('Service updated successfully!');
       navigate('/services');
@@ -248,6 +274,16 @@ const EditService = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div>
+                  <PhoneInput
+                    value={formData.phone_number}
+                    onChange={(value) => handleInputChange('phone_number', value)}
+                    label="Customer Phone"
+                    placeholder="e.g. 0712345678 or +254712345678"
+                    required={false}
+                  />
+                </div>
               </div>
 
               <div>
@@ -279,6 +315,16 @@ const EditService = () => {
             </form>
           </CardContent>
         </Card>
+
+        <ReasonDialog
+          isOpen={showReasonDialog}
+          onClose={() => setShowReasonDialog(false)}
+          onConfirm={handleUpdateWithReason}
+          title="Update Service"
+          description="Please provide a reason for updating this service record."
+          actionType="update"
+          loading={submitting}
+        />
       </div>
     </div>
   );
