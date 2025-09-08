@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Calendar } from "lucide-react";
+import { Edit, Trash2, Calendar, ChevronDown, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface Expense {
   id: string;
@@ -26,6 +31,8 @@ export const ExpensesByDate: React.FC<ExpensesByDateProps> = ({
   onDelete,
   userRole,
 }) => {
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+
   // Group expenses by date
   const groupedExpenses = expenses.reduce((acc, expense) => {
     const date = expense.expense_date;
@@ -73,6 +80,22 @@ export const ExpensesByDate: React.FC<ExpensesByDateProps> = ({
     );
   };
 
+  const getCategoryBreakdown = (dayExpenses: Expense[]) => {
+    const breakdown = dayExpenses.reduce((acc, expense) => {
+      const category = expense.category;
+      if (!acc[category]) {
+        acc[category] = { count: 0, total: 0 };
+      }
+      acc[category].count += 1;
+      acc[category].total += parseFloat(String(expense.amount));
+      return acc;
+    }, {} as Record<string, { count: number; total: number }>);
+
+    return Object.entries(breakdown)
+      .sort(([,a], [,b]) => b.total - a.total)
+      .slice(0, 3); // Show top 3 categories
+  };
+
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       Supplies: "bg-blue-100 text-blue-800 border-blue-200",
@@ -89,95 +112,137 @@ export const ExpensesByDate: React.FC<ExpensesByDateProps> = ({
     return colors[category] || colors["Other"];
   };
 
+  const toggleDateExpansion = (date: string) => {
+    const newExpanded = new Set(expandedDates);
+    if (newExpanded.has(date)) {
+      newExpanded.delete(date);
+    } else {
+      newExpanded.add(date);
+    }
+    setExpandedDates(newExpanded);
+  };
+
   if (sortedDates.length === 0) {
     return null;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {sortedDates.map((date) => {
         const dayExpenses = groupedExpenses[date];
         const dayTotal = getDayTotal(dayExpenses);
+        const categoryBreakdown = getCategoryBreakdown(dayExpenses);
+        const isExpanded = expandedDates.has(date);
 
         return (
           <Card key={date} className="shadow-sm border border-border">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="text-lg font-semibold">
-                    {formatDate(date)}
-                  </CardTitle>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-destructive">
-                    -{formatCurrency(dayTotal)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {dayExpenses.length}{" "}
-                    {dayExpenses.length === 1 ? "expense" : "expenses"}
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                {dayExpenses.map((expense) => (
-                  <div
-                    key={expense.id}
-                    className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-medium text-foreground truncate">
-                          {expense.description}
-                        </h4>
-                        <Badge
-                          variant="outline"
-                          className={`${getCategoryColor(
-                            expense.category
-                          )} text-xs`}
-                        >
-                          {expense.category}
-                        </Badge>
+            <Collapsible
+              open={isExpanded}
+              onOpenChange={() => toggleDateExpansion(date)}
+            >
+              <CollapsibleTrigger asChild>
+                <CardHeader className="pb-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <CardTitle className="text-lg font-semibold">
+                          {formatDate(date)}
+                        </CardTitle>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {categoryBreakdown.map(([category, data]) => (
+                            <Badge
+                              key={category}
+                              variant="outline"
+                              className={`${getCategoryColor(category)} text-xs`}
+                            >
+                              {category}: {formatCurrency(data.total)}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Added:{" "}
-                        {new Date(expense.created_at).toLocaleDateString()}
-                      </p>
                     </div>
-                    <div className="flex items-center gap-4 ml-4">
+                    <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className="text-lg font-semibold text-destructive">
-                          -{formatCurrency(parseFloat(String(expense.amount)))}
+                        <p className="text-lg font-bold text-destructive">
+                          -{formatCurrency(dayTotal)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {dayExpenses.length}{" "}
+                          {dayExpenses.length === 1 ? "expense" : "expenses"}
                         </p>
                       </div>
-                      <div className="flex gap-2">
-                        <Link to={`/expenses/edit/${expense.id}`}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        {userRole === "admin" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
-                            onClick={() => onDelete(expense.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                      {isExpanded ? (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
+                </CardHeader>
+              </CollapsibleTrigger>
+
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {dayExpenses.map((expense) => (
+                      <div
+                        key={expense.id}
+                        className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-medium text-foreground truncate">
+                              {expense.description}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className={`${getCategoryColor(
+                                expense.category
+                              )} text-xs`}
+                            >
+                              {expense.category}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Added:{" "}
+                            {new Date(expense.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4 ml-4">
+                          <div className="text-right">
+                            <p className="text-lg font-semibold text-destructive">
+                              -{formatCurrency(parseFloat(String(expense.amount)))}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Link to={`/expenses/edit/${expense.id}`}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            {userRole === "admin" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
+                                onClick={() => onDelete(expense.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
         );
       })}

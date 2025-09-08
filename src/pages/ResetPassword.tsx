@@ -21,11 +21,19 @@ const ResetPassword = () => {
   const refreshToken = searchParams.get('refresh_token');
 
   useEffect(() => {
-    // Set the session from URL parameters
+    // Set the session from URL parameters with better debugging
     if (accessToken && refreshToken) {
+      console.log('Setting session with tokens:', { accessToken: accessToken?.substring(0, 20) + '...', refreshToken: refreshToken?.substring(0, 20) + '...' });
       supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Error setting session:', error);
+          toast.error('Failed to authenticate for password reset');
+        } else {
+          console.log('Session set successfully:', data.session?.user?.id);
+        }
       });
     }
   }, [accessToken, refreshToken]);
@@ -51,13 +59,16 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
+      console.log('Attempting to update password...');
       const { error } = await supabase.auth.updateUser({
         password: password
       });
 
       if (error) {
+        console.error('Password update error:', error);
         toast.error(error.message);
       } else {
+        console.log('Password updated successfully');
         toast.success('Password updated successfully!');
         setIsComplete(true);
         
@@ -67,6 +78,7 @@ const ResetPassword = () => {
         }, 2000);
       }
     } catch (error: any) {
+      console.error('Unexpected error:', error);
       toast.error('An unexpected error occurred');
     }
 
