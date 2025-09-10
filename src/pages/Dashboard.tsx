@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import { DateRangeFilter, DateRange } from "@/components/DateRangeFilter";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EnhancedAnalytics } from "@/components/EnhancedAnalytics";
 import {
   startOfDay,
   endOfDay,
@@ -68,6 +69,8 @@ const Dashboard = () => {
     to: endOfDay(new Date()),
   });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [allServices, setAllServices] = useState<any[]>([]);
+  const [allExpenses, setAllExpenses] = useState<any[]>([]);
 
   useEffect(() => {
     if (userProfile?.business_id) {
@@ -280,6 +283,10 @@ const Dashboard = () => {
           unpaidServices: allUnpaidServices.slice(0, 5), // Show 5 unpaid for action items
           partialServices: allPartiallyPaidServices.slice(0, 2), // Show all partial for action items
         });
+
+        // Store all services and expenses for analytics
+        setAllServices(allServices);
+        setAllExpenses(expenses || []);
       }
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -410,22 +417,24 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-medium">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {currentMonth} Revenue
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
-              {formatCurrency(stats.totalRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Revenue collected this month
-            </p>
-          </CardContent>
-        </Card>
+        {userProfile?.role === 'admin' && (
+          <Card className="shadow-medium">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {currentMonth} Revenue
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold">
+                {formatCurrency(stats.totalRevenue)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Revenue collected this month
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Additional Stats Row */}
@@ -464,22 +473,24 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-medium">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Period Expenses
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-destructive">
-              {formatCurrency(stats.totalExpenses)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Expenses in selected period
-            </p>
-          </CardContent>
-        </Card>
+        {userProfile?.role === 'admin' && (
+          <Card className="shadow-medium">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Period Expenses
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-destructive">
+                {formatCurrency(stats.totalExpenses)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Expenses in selected period
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Action Buttons */}
@@ -697,6 +708,13 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Enhanced Analytics */}
+      {userProfile?.role === 'admin' && (
+        <div className="mb-8">
+          <EnhancedAnalytics services={allServices} expenses={allExpenses} />
+        </div>
+      )}
     </div>
   );
 };

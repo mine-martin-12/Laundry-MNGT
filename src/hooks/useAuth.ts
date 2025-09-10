@@ -21,13 +21,22 @@ export const useAuthProvider = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isInitialized = false;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('Auth state change:', event, session ? 'session exists' : 'no session');
+        
+        // Prevent multiple rapid updates during initialization
+        if (!isInitialized && event === 'INITIAL_SESSION') {
+          isInitialized = true;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user profile when session changes
+        // Fetch user profile when session changes - use setTimeout to prevent deadlock
         if (session?.user) {
           setTimeout(async () => {
             try {
@@ -50,14 +59,20 @@ export const useAuthProvider = () => {
       }
     );
 
-    // THEN check for existing session
+    // THEN check for existing session (only once)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      console.log('Initial session check:', session ? 'session exists' : 'no session');
+      if (!isInitialized) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {

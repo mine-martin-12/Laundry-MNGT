@@ -22,12 +22,22 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   if (variant === "tetris") {
     return (
       <div className={cn("flex items-center justify-center", className)}>
-        <div className="grid grid-cols-2 gap-1">
-          {[0, 1, 2, 3].map((i) => (
+        <motion.div
+          className="grid grid-cols-3 gap-2"
+          animate={{
+            rotate: 360,
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        >
+          {[...Array(9)].map((_, i) => (
             <motion.div
               key={i}
               className={cn(
-                "bg-primary rounded-sm",
+                "bg-primary rounded-md shadow-lg border-2 border-primary/20",
                 size === "sm"
                   ? "w-2 h-2"
                   : size === "md"
@@ -35,18 +45,27 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
                   : "w-4 h-4"
               )}
               animate={{
-                scale: [1, 0.8, 1],
-                rotate: [0, 180, 360],
+                scale: [0.5, 1.3, 0.5],
+                opacity: [0.4, 1, 0.4],
+                backgroundColor: [
+                  "hsl(var(--primary))",
+                  "hsl(var(--primary) / 0.8)",
+                  "hsl(var(--primary))"
+                ],
               }}
               transition={{
-                duration: 1.2,
+                duration: 2,
                 repeat: Infinity,
-                delay: i * 0.1,
+                delay: i * 0.2,
                 ease: "easeInOut",
+              }}
+              style={{
+                aspectRatio: "1",
+                boxShadow: "0 0 20px hsl(var(--primary) / 0.3)",
               }}
             />
           ))}
-        </div>
+        </motion.div>
       </div>
     );
   }
