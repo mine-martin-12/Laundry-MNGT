@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, User, Building2, Lock, Save } from 'lucide-react';
+import { ArrowLeft, User, Building2, Lock, Save, Bell } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { NotificationTriggers } from "@/components/NotificationTriggers";
 
 const Settings = () => {
   const { user, userProfile, loading, resetPassword } = useAuth();
@@ -238,6 +239,21 @@ const Settings = () => {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Notification Management - Admin Only */}
+        {userProfile?.role === 'admin' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notification Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <NotificationTriggers />
             </CardContent>
           </Card>
         )}

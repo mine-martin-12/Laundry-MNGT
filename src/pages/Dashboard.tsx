@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import { DateRangeFilter, DateRange } from "@/components/DateRangeFilter";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EnhancedAnalytics } from "@/components/EnhancedAnalytics";
 import {
   startOfDay,
   endOfDay,
@@ -68,6 +69,8 @@ const Dashboard = () => {
     to: endOfDay(new Date()),
   });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [allServices, setAllServices] = useState<any[]>([]);
+  const [allExpenses, setAllExpenses] = useState<any[]>([]);
 
   useEffect(() => {
     if (userProfile?.business_id) {
@@ -280,6 +283,10 @@ const Dashboard = () => {
           unpaidServices: allUnpaidServices.slice(0, 5), // Show 5 unpaid for action items
           partialServices: allPartiallyPaidServices.slice(0, 2), // Show all partial for action items
         });
+
+        // Store all services and expenses for analytics
+        setAllServices(allServices);
+        setAllExpenses(expenses || []);
       }
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -701,6 +708,13 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Enhanced Analytics */}
+      {userProfile?.role === 'admin' && (
+        <div className="mb-8">
+          <EnhancedAnalytics services={allServices} expenses={allExpenses} />
+        </div>
+      )}
     </div>
   );
 };
