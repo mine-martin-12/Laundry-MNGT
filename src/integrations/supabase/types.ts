@@ -221,6 +221,42 @@ export type Database = {
           },
         ]
       }
+      notification_triggers: {
+        Row: {
+          business_id: string
+          conditions: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          message_template: string
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          conditions?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_template: string
+          name: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          conditions?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_template?: string
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           business_id: string

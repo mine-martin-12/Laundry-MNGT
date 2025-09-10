@@ -55,7 +55,7 @@ interface AnalyticsProps {
   expenses: Expense[];
 }
 
-export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
+const EnhancedAnalytics = ({ services, expenses }: AnalyticsProps) => {
   // Revenue vs Expenses Chart Data
   const getRevenueVsExpensesData = () => {
     const months = [];
@@ -195,74 +195,82 @@ export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
   return (
     <div className="space-y-6">
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(totalRevenue)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Revenue</p>
+                <p className="text-lg sm:text-2xl font-bold text-primary truncate">{formatCurrency(totalRevenue)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-primary" />
+              <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Expenses</p>
-                <p className="text-2xl font-bold text-destructive">{formatCurrency(totalExpenses)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Expenses</p>
+                <p className="text-lg sm:text-2xl font-bold text-destructive truncate">{formatCurrency(totalExpenses)}</p>
               </div>
-              <TrendingDown className="h-8 w-8 text-destructive" />
+              <TrendingDown className="h-6 w-6 sm:h-8 sm:w-8 text-destructive shrink-0" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Profit</p>
-                <p className={`text-2xl font-bold ${profit >= 0 ? 'text-success' : 'text-destructive'}`}>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Profit</p>
+                <p className={`text-lg sm:text-2xl font-bold truncate ${profit >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {formatCurrency(profit)}
                 </p>
               </div>
               {profit >= 0 ? 
-                <TrendingUp className="h-8 w-8 text-success" /> : 
-                <TrendingDown className="h-8 w-8 text-destructive" />
+                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-success shrink-0" /> : 
+                <TrendingDown className="h-6 w-6 sm:h-8 sm:w-8 text-destructive shrink-0" />
               }
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Profit Margin</p>
-                <p className={`text-2xl font-bold ${profitMargin >= 0 ? 'text-success' : 'text-destructive'}`}>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Profit Margin</p>
+                <p className={`text-lg sm:text-2xl font-bold ${profitMargin >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {profitMargin.toFixed(1)}%
                 </p>
               </div>
-              <Calendar className="h-8 w-8 text-muted-foreground" />
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground shrink-0" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
         {/* Revenue vs Expenses Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Revenue vs Expenses (6 Months)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-80">
+          <CardContent className="p-3 sm:p-6">
+            <ChartContainer config={chartConfig} className="h-60 sm:h-80">
               <BarChart data={revenueVsExpensesData}>
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                <XAxis 
+                  dataKey="month" 
+                  fontSize={12}
+                  tickMargin={5}
+                />
+                <YAxis 
+                  tickFormatter={(value) => formatCurrency(value)} 
+                  fontSize={12}
+                  width={60}
+                />
                 <ChartTooltip 
                   content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} 
                 />
@@ -279,8 +287,8 @@ export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
           <CardHeader>
             <CardTitle>Service Types Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-80">
+          <CardContent className="p-3 sm:p-6">
+            <div className="h-60 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -288,10 +296,10 @@ export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    outerRadius={80}
+                    outerRadius={window.innerWidth < 640 ? 60 : 80}
                     fill="#8884d8"
                     dataKey="count"
-                    label={({ type, percentage }) => `${type}: ${percentage.toFixed(1)}%`}
+                    label={({ type, percentage }) => window.innerWidth >= 640 ? `${type}: ${percentage.toFixed(1)}%` : ''}
                   >
                     {serviceTypeData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
@@ -309,11 +317,20 @@ export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
           <CardHeader>
             <CardTitle>Daily Revenue Trend (30 Days)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-80">
+          <CardContent className="p-3 sm:p-6">
+            <ChartContainer config={chartConfig} className="h-60 sm:h-80">
               <AreaChart data={dailyRevenueTrend}>
-                <XAxis dataKey="date" />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                <XAxis 
+                  dataKey="date" 
+                  fontSize={12}
+                  tickMargin={5}
+                  interval="preserveStartEnd"
+                />
+                <YAxis 
+                  tickFormatter={(value) => formatCurrency(value)} 
+                  fontSize={12}
+                  width={60}
+                />
                 <ChartTooltip 
                   content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} 
                 />
@@ -334,22 +351,22 @@ export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
           <CardHeader>
             <CardTitle>Payment Status Overview</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-3 sm:p-6">
+            <div className="space-y-3 sm:space-y-4">
               {paymentStatusData.map((status, index) => (
-                <div key={status.status} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                  <div className="flex items-center gap-3">
+                <div key={status.status} className="flex items-center justify-between p-2 sm:p-3 border border-border rounded-lg">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     <div 
-                      className="w-4 h-4 rounded-full" 
+                      className="w-3 h-3 sm:w-4 sm:h-4 rounded-full shrink-0" 
                       style={{ backgroundColor: pieColors[index] }}
                     />
-                    <div>
-                      <p className="font-medium">{status.status}</p>
-                      <p className="text-sm text-muted-foreground">{status.count} services</p>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">{status.status}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{status.count} services</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(status.amount)}</p>
+                  <div className="text-right shrink-0">
+                    <p className="font-semibold text-sm sm:text-base">{formatCurrency(status.amount)}</p>
                   </div>
                 </div>
               ))}
@@ -366,15 +383,15 @@ export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
             Top Customers by Revenue
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           <div className="space-y-3">
             {topCustomers.map((customer, index) => (
-              <div key={customer.customer} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">#{index + 1}</Badge>
-                  <span className="font-medium">{customer.customer}</span>
+              <div key={customer.customer} className="flex items-center justify-between p-2 sm:p-3 border border-border rounded-lg">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <Badge variant="outline" className="shrink-0 text-xs">#{index + 1}</Badge>
+                  <span className="font-medium text-sm sm:text-base truncate">{customer.customer}</span>
                 </div>
-                <span className="font-semibold text-primary">{formatCurrency(customer.revenue)}</span>
+                <span className="font-semibold text-primary text-sm sm:text-base shrink-0">{formatCurrency(customer.revenue)}</span>
               </div>
             ))}
           </div>
@@ -382,4 +399,6 @@ export function EnhancedAnalytics({ services, expenses }: AnalyticsProps) {
       </Card>
     </div>
   );
-}
+};
+
+export { EnhancedAnalytics };
