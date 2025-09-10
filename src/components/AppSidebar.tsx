@@ -37,29 +37,6 @@ import {
 } from "@/components/ui/collapsible";
 import { useTheme } from "next-themes";
 
-const navigationItems = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Services",
-    url: "/services",
-    icon: ShirtIcon,
-  },
-  {
-    title: "Expenses",
-    url: "/expenses",
-    icon: Receipt,
-  },
-  {
-    title: "Users",
-    url: "/users",
-    icon: Users,
-  },
-];
-
 export function AppSidebar() {
   const { user, userProfile, signOut } = useAuth();
   const location = useLocation();
@@ -71,6 +48,32 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   const { theme, setTheme } = useTheme();
+
+  // Filter navigation items based on user role
+  const navigationItems = [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Services",
+      url: "/services",
+      icon: ShirtIcon,
+    },
+    ...(userProfile?.role === 'admin' ? [
+      {
+        title: "Expenses",
+        url: "/expenses",
+        icon: Receipt,
+      },
+      {
+        title: "Users",
+        url: "/users",
+        icon: Users,
+      },
+    ] : [])
+  ];
 
   // Fetch business name
   React.useEffect(() => {
