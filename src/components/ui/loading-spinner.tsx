@@ -1,4 +1,3 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -8,11 +7,11 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+const LoadingSpinner = ({
   size = "md",
   variant = "default",
   className,
-}) => {
+}: LoadingSpinnerProps) => {
   const sizeClasses = {
     sm: "w-4 h-4",
     md: "w-8 h-8",

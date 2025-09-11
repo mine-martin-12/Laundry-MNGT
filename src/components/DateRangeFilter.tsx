@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Calendar, CalendarIcon, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,7 +35,7 @@ const predefinedRanges = {
   custom: { label: 'Custom Range', days: null }
 };
 
-export const DateRangeFilter = React.memo<DateRangeFilterProps>(({ onDateRangeChange, defaultRange = 'today' }) => {
+export const DateRangeFilter = memo<DateRangeFilterProps>(({ onDateRangeChange, defaultRange = 'today' }) => {
   const [selectedRange, setSelectedRange] = useState(defaultRange);
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [isCustomOpen, setIsCustomOpen] = useState(false);
@@ -100,7 +100,7 @@ export const DateRangeFilter = React.memo<DateRangeFilterProps>(({ onDateRangeCh
   }, [customRange, onDateRangeChange]);
 
   // Initialize with default range
-  React.useEffect(() => {
+  useEffect(() => {
     const range = getCurrentDateRange();
     onDateRangeChange(range);
   }, []);

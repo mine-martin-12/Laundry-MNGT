@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -14,7 +13,7 @@ interface PhoneInputProps {
   className?: string;
 }
 
-const PhoneInput: React.FC<PhoneInputProps> = ({
+const PhoneInput = ({
   value,
   onChange,
   label = "Phone Number",
@@ -23,7 +22,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   disabled = false,
   error,
   className,
-}) => {
+}: PhoneInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     // Allow only numbers, +, spaces, and hyphens

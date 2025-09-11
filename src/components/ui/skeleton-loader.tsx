@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './skeleton';
@@ -9,11 +8,11 @@ interface SkeletonLoaderProps {
   className?: string;
 }
 
-const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ 
+const SkeletonLoader = ({ 
   variant = 'card', 
   count = 1,
   className 
-}) => {
+}: SkeletonLoaderProps) => {
   const renderSkeletonCard = () => (
     <motion.div
       className="border rounded-lg p-4 space-y-3"

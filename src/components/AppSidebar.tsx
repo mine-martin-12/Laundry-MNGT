@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -43,7 +43,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { open } = useSidebar();
   const [businessName, setBusinessName] =
-    React.useState<string>("Business Hub");
+    useState<string>("Business Hub");
 
   const currentPath = location.pathname;
 
@@ -76,7 +76,7 @@ export function AppSidebar() {
   ];
 
   // Fetch business name
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchBusinessName = async () => {
       if (userProfile?.business_id) {
         try {

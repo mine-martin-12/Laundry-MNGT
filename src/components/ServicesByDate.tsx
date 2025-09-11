@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { format, isSameDay, parseISO } from 'date-fns';
 import { ChevronDown, ChevronRight, DollarSign, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,7 +32,7 @@ interface GroupedServices {
   [date: string]: Service[];
 }
 
-export function ServicesByDate({ services, onMarkPaid, onDelete, userRole }: ServicesByDateProps) {
+const ServicesByDate = ({ services, onMarkPaid, onDelete, userRole }: ServicesByDateProps) => {
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
   // Group services by date
@@ -270,3 +270,5 @@ export function ServicesByDate({ services, onMarkPaid, onDelete, userRole }: Ser
     </div>
   );
 }
+
+export { ServicesByDate };
