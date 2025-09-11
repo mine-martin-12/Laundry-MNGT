@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ interface ReasonDialogProps {
   loading?: boolean;
 }
 
-const ReasonDialog: React.FC<ReasonDialogProps> = ({
+const ReasonDialog = ({
   isOpen,
   onClose,
   onConfirm,
@@ -30,7 +30,7 @@ const ReasonDialog: React.FC<ReasonDialogProps> = ({
   description,
   actionType,
   loading = false,
-}) => {
+}: ReasonDialogProps) => {
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 

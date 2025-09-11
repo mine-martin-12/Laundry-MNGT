@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +26,11 @@ interface ExpensesByDateProps {
   userRole?: string;
 }
 
-export const ExpensesByDate: React.FC<ExpensesByDateProps> = ({
+export const ExpensesByDate = ({
   expenses,
   onDelete,
   userRole,
-}) => {
+}: ExpensesByDateProps) => {
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
   // Group expenses by date
