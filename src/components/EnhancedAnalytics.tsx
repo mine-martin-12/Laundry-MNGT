@@ -172,7 +172,7 @@ const EnhancedAnalytics = ({ services, expenses }: AnalyticsProps) => {
 
     return Object.entries(customerMap)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
+      .slice(0, 10)
       .map(([customer, revenue]) => ({ customer, revenue }));
   };
 
