@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -30,6 +31,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { getPendingUpdatesCount } from "@/lib/notifications";
 import {
   Collapsible,
   CollapsibleContent,
@@ -42,8 +45,8 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { open } = useSidebar();
-  const [businessName, setBusinessName] =
-    useState<string>("Business Hub");
+  const [businessName, setBusinessName] = useState<string>("Business Hub");
+  const [pendingCount, setPendingCount] = useState<number>(0);
 
   const currentPath = location.pathname;
 
@@ -61,21 +64,29 @@ export function AppSidebar() {
       url: "/services",
       icon: ShirtIcon,
     },
-    ...(userProfile?.role === 'admin' ? [
-      {
-        title: "Expenses",
-        url: "/expenses",
-        icon: Receipt,
-      },
-      {
-        title: "Users",
-        url: "/users",
-        icon: Users,
-      },
-    ] : [])
+    {
+      title: "Pending Updates",
+      url: "/pending-updates",
+      icon: ClipboardCheck,
+      badge: pendingCount > 0 ? pendingCount : undefined
+    },
+    ...(userProfile?.role === "admin"
+      ? [
+          {
+            title: "Expenses",
+            url: "/expenses",
+            icon: Receipt,
+          },
+          {
+            title: "Users",
+            url: "/users",
+            icon: Users,
+          },
+        ]
+      : []),
   ];
 
-  // Fetch business name
+  // Fetch business name and pending count
   useEffect(() => {
     const fetchBusinessName = async () => {
       if (userProfile?.business_id) {
@@ -95,8 +106,47 @@ export function AppSidebar() {
       }
     };
 
+    const fetchPendingCount = async () => {
+      if (userProfile?.business_id) {
+        if (userProfile.role === "admin") {
+          // Admins see total pending count
+          const count = await getPendingUpdatesCount(userProfile.business_id);
+          setPendingCount(count);
+        } else {
+          // Regular users see their own pending requests
+          const { count } = await supabase
+            .from("pending_updates")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", userProfile.user_id)
+            .eq("status", "pending");
+          setPendingCount(count || 0);
+        }
+      }
+    };
+
     fetchBusinessName();
-  }, [userProfile?.business_id]);
+    fetchPendingCount();
+
+    // Set up real-time subscription for pending updates count
+    const channel = supabase
+      .channel('pending_updates_count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pending_updates'
+        },
+        () => {
+          fetchPendingCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userProfile?.business_id, userProfile?.user_id, userProfile?.role]);
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -128,7 +178,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-sidebar-border" collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border p-4">
+      <SidebarHeader className="border-b border-sidebar-border p-3">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
             <ShirtIcon className="h-7 w-7 text-primary-foreground" />
@@ -154,9 +204,21 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} className="text-lg md:text-base">
-                      <item.icon className="h-6 w-6 md:h-5 md:w-5" />
-                      <span className="text-lg md:text-base font-medium">{item.title}</span>
+                    <NavLink to={item.url} className="text-lg md:text-base flex items-center justify-between">
+                      <div className="flex items-center">
+                        <item.icon className="h-6 w-6 md:h-5 md:w-5" />
+                        <span className="text-lg md:text-base font-medium ml-3">
+                          {item.title}
+                        </span>
+                      </div>
+                      {item.badge && (
+                        <Badge 
+                          variant="destructive" 
+                          className="h-5 min-w-[20px] rounded-full text-xs"
+                        >
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </Badge>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -197,7 +259,9 @@ export function AppSidebar() {
             >
               <NavLink to="/settings">
                 <Settings className="h-6 w-6 md:h-5 md:w-5" />
-                {open && <span className="ml-2 text-lg md:text-base">Settings</span>}
+                {open && (
+                  <span className="ml-2 text-lg md:text-base">Settings</span>
+                )}
               </NavLink>
             </Button>
 
@@ -209,7 +273,7 @@ export function AppSidebar() {
                 <ThemeToggle />
               </div>
               {open && (
-                <span className="ml-2 text-lg md:text-base text-sidebar-foreground">
+                <span className="ml-4 text-lg md:text-base text-sidebar-foreground">
                   Theme
                 </span>
               )}
@@ -222,7 +286,9 @@ export function AppSidebar() {
               className="justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <LogOut className="h-6 w-6 md:h-5 md:w-5" />
-              {open && <span className="ml-2 text-lg md:text-base">Sign Out</span>}
+              {open && (
+                <span className="ml-2 text-lg md:text-base">Sign Out</span>
+              )}
             </Button>
           </div>
         </div>

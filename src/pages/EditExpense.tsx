@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
+import { createPendingUpdate } from "@/lib/pending-updates";
 import { toast } from "sonner";
 
 interface ExpenseFormData {
@@ -35,6 +36,7 @@ const EditExpense = () => {
     amount: "",
     expense_date: "",
   });
+  const [originalRecord, setOriginalRecord] = useState<any>(null);
   const [loadingExpense, setLoadingExpense] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -81,6 +83,7 @@ const EditExpense = () => {
           amount: data.amount.toString(),
           expense_date: data.expense_date,
         });
+        setOriginalRecord(data);
       }
     } catch (error) {
       console.error("Error fetching expense:", error);
@@ -106,24 +109,30 @@ const EditExpense = () => {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("expenses")
-        .update({
-          category: formData.category,
-          description: formData.description,
-          amount: parseFloat(formData.amount),
-          expense_date: formData.expense_date,
-        })
-        .eq("id", id)
-        .eq("business_id", userProfile.business_id);
+      // Create new values object with proper types
+      const newValues = {
+        category: formData.category,
+        description: formData.description,
+        amount: parseFloat(formData.amount),
+        expense_date: formData.expense_date,
+      };
 
-      if (error) throw error;
+      // Submit pending update
+      const { error } = await createPendingUpdate({
+        tableName: 'expenses',
+        recordId: id!,
+        oldValues: originalRecord,
+        newValues: newValues,
+        userId: user.id,
+        businessId: userProfile.business_id,
+      });
 
-      toast.success("Expense updated successfully!");
-      navigate("/expenses");
+      if (!error) {
+        navigate("/expenses");
+      }
     } catch (error) {
-      console.error("Error updating expense:", error);
-      toast.error("Failed to update expense");
+      console.error("Error submitting update request:", error);
+      toast.error("Failed to submit update request");
     } finally {
       setSubmitting(false);
     }
@@ -231,7 +240,7 @@ const EditExpense = () => {
               <div className="flex gap-4 pt-4">
                 <Button type="submit" disabled={submitting} className="flex-1">
                   <Save className="h-4 w-4 mr-2" />
-                  {submitting ? "Updating..." : "Update Expense"}
+                  {submitting ? "Submitting..." : "Submit for Approval"}
                 </Button>
                 <Link to="/expenses" className="flex-1">
                   <Button type="button" variant="outline" className="w-full">

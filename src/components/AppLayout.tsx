@@ -1,6 +1,7 @@
-import React from 'react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/AppSidebar';
+import React from "react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,15 +13,18 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 border-b border-border bg-card px-4 flex items-center gap-4">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="hidden lg:block">
-              <SidebarTrigger />
+          <header className="h-16 border-b border-border bg-card px-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="lg:hidden" />
+              <div className="hidden lg:block">
+                <SidebarTrigger />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
             </div>
           </header>
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
         </main>
       </div>
     </SidebarProvider>
