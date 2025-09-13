@@ -345,7 +345,7 @@ const Dashboard = () => {
               Welcome back, {userProfile?.first_name}!
             </h1>
             <p className="text-muted-foreground">
-              Here's what's happening with your laundry business.
+              Here is what is happening with your laundry business.
             </p>
           </div>
           <DateRangeFilter onDateRangeChange={setDateRange} />
@@ -417,7 +417,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {userProfile?.role === 'admin' && (
+        {userProfile?.role === "admin" && (
           <Card className="shadow-medium">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -473,7 +473,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {userProfile?.role === 'admin' && (
+        {userProfile?.role === "admin" && (
           <Card className="shadow-medium">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -710,8 +710,8 @@ const Dashboard = () => {
       </div>
 
       {/* Enhanced Analytics */}
-      {userProfile?.role === 'admin' && (
-        <div className="mb-8">
+      {userProfile?.role === "admin" && (
+        <div className="mb-8 mt-8">
           <EnhancedAnalytics services={allServices} expenses={allExpenses} />
         </div>
       )}

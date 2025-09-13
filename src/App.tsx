@@ -22,6 +22,9 @@ import EditUser from "./pages/EditUser";
 import Settings from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import ActivityHistory from "./pages/ActivityHistory";
+import PendingUpdates from "./pages/PendingUpdates";
+import NotificationHistory from "./pages/NotificationHistory";
+import NotificationSettings from "./pages/NotificationSettings";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +55,9 @@ const App = () => (
                       <Route path="/users" element={<Users />} />
                       <Route path="/users/new" element={<AddUser />} />
                       <Route path="/users/edit/:id" element={<EditUser />} />
+                      <Route path="/pending-updates" element={<PendingUpdates />} />
+                      <Route path="/notifications" element={<NotificationHistory />} />
+                      <Route path="/notification-settings" element={<NotificationSettings />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/activity-history" element={<ActivityHistory />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

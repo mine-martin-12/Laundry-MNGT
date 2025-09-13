@@ -64,6 +64,45 @@ export type Database = {
           },
         ]
       }
+      app_notifications: {
+        Row: {
+          business_id: string
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read_at: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read_at?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       businesses: {
         Row: {
           created_at: string
@@ -221,6 +260,48 @@ export type Database = {
           },
         ]
       }
+      notification_history: {
+        Row: {
+          archived_at: string | null
+          business_id: string
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read_at: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          business_id: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read_at?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          business_id?: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_triggers: {
         Row: {
           business_id: string
@@ -316,6 +397,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pending_updates: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          new_values: Json
+          old_values: Json
+          reason: string | null
+          record_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["update_status"]
+          table_name: string
+          updated_at: string
+          user_id: string
+          user_reason: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          new_values: Json
+          old_values: Json
+          reason?: string | null
+          record_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["update_status"]
+          table_name: string
+          updated_at?: string
+          user_id: string
+          user_reason?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          new_values?: Json
+          old_values?: Json
+          reason?: string | null
+          record_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["update_status"]
+          table_name?: string
+          updated_at?: string
+          user_id?: string
+          user_reason?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -425,6 +557,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_pending_update: {
+        Args: { update_id: string }
+        Returns: boolean
+      }
+      create_app_notification: {
+        Args: {
+          p_business_id: string
+          p_data?: Json
+          p_message: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       get_user_business: {
         Args: { user_id: string }
         Returns: string
@@ -433,10 +580,19 @@ export type Database = {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      mark_app_notification_read: {
+        Args: { notification_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       payment_method: "cash" | "mpesa" | "bank_cheque" | "credit"
       payment_status_new: "not_paid" | "partially_paid" | "fully_paid"
+      update_status:
+        | "pending"
+        | "approved"
+        | "sent_back_for_review"
+        | "rejected"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -567,6 +723,12 @@ export const Constants = {
     Enums: {
       payment_method: ["cash", "mpesa", "bank_cheque", "credit"],
       payment_status_new: ["not_paid", "partially_paid", "fully_paid"],
+      update_status: [
+        "pending",
+        "approved",
+        "sent_back_for_review",
+        "rejected",
+      ],
       user_role: ["admin", "user"],
     },
   },
